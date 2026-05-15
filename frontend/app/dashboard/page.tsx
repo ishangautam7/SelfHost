@@ -113,7 +113,7 @@ export default function DashboardPage() {
         {/* API Key Section */}
         <div className={styles.apiSection}>
           <div className={styles.apiInfo}>
-            <h3>🔑 Agent API Key</h3>
+            <h3>Agent API Key</h3>
             <p>Use this to connect the agent on your device</p>
           </div>
           <div className={styles.apiKeyWrap}>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
           <div className={styles.empty}>Loading apps...</div>
         ) : apps.length === 0 ? (
           <div className={styles.empty}>
-            <div className={styles.emptyIcon}>📦</div>
+            <div className={styles.emptyIcon}></div>
             <h3>No apps deployed yet</h3>
             <p>Deploy your first app and it will appear here</p>
             <Link href="/deploy" className="btn btn-primary" style={{ marginTop: 16 }}>

@@ -23,12 +23,12 @@ impl TunnelManager {
     }
 
     pub fn register(&mut self, user_id: String, sender: mpsc::Sender<String>) {
-        log::info!("🔌 Agent connected for user: {}", user_id);
+        log::info!("Agent connected for user: {}", user_id);
         self.senders.insert(user_id, sender);
     }
 
     pub fn unregister(&mut self, user_id: &str) {
-        log::info!("🔌 Agent disconnected for user: {}", user_id);
+        log::info!("Agent disconnected for user: {}", user_id);
         self.senders.remove(user_id);
     }
 
@@ -175,7 +175,7 @@ pub async fn ws_tunnel_handler(
                             let new_status = if success { "running" } else { "error" };
                             let _ = state.db.update_app_status(&app_id, new_status).await;
                             log::info!(
-                                "📦 App {} command result: {} - {}",
+                                "App {} command result: {} - {}",
                                 app_id,
                                 success,
                                 message
@@ -214,7 +214,7 @@ pub async fn ws_tunnel_handler(
             mgr.unregister(&user_id);
         }
         let _ = state.db.set_tunnel_disconnected(&agent_id).await;
-        log::info!("🔌 Agent {} disconnected", agent_id);
+        log::info!("Agent {} disconnected", agent_id);
     });
 
     Ok(response)

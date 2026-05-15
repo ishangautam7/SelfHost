@@ -61,7 +61,7 @@ export default function DeployPage() {
       <main className={styles.main}>
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
-            <h1>🚀 Deploy New App</h1>
+            <h1>Deploy New App</h1>
             <p>Configure your application and get a public URL instantly</p>
           </div>
 
@@ -146,7 +146,7 @@ export default function DeployPage() {
             <div className={styles.preview}>
               <h3>Preview</h3>
               <div className={styles.previewUrl}>
-                🌐 <code>{subdomain || 'your-app'}.selfhost.ishangautam7.com.np</code>
+                <code>{subdomain || 'your-app'}.selfhost.ishangautam7.com.np</code>
               </div>
               <div className={styles.previewDetails}>
                 <span>Port: {localPort}</span>

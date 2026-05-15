@@ -36,11 +36,12 @@ async fn main() -> std::io::Result<()> {
         config: config.clone(),
     });
 
-    log::info!("🚀 SelfHost server starting on {}:{}", config.host, config.port);
-    log::info!("📡 Base domain: {}", config.base_domain);
+    log::info!("SelfHost server starting on {}:{}", config.host, config.port);
+    log::info!("Base domain: {}", config.base_domain);
 
     HttpServer::new(move || {
-        let cors = Cors::default()
+        let cors = 
+        Cors::default()
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header()

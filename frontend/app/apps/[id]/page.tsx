@@ -94,17 +94,17 @@ export default function AppDetailPage() {
           </div>
           <div className={styles.headerActions}>
             {app.status === 'running' ? (
-              <button className="btn btn-danger" onClick={handleStop}>⏹ Stop</button>
+              <button className="btn btn-danger" onClick={handleStop}>Stop</button>
             ) : (
-              <button className="btn btn-success" onClick={handleStart}>▶ Start</button>
+              <button className="btn btn-success" onClick={handleStart}>Start</button>
             )}
-            <button className="btn btn-danger" onClick={handleDelete}>🗑 Delete</button>
+            <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
           </div>
         </div>
 
         {/* Domain Card */}
         <div className={`card ${styles.domainCard}`}>
-          <h3>🌐 Public URL</h3>
+          <h3>Public URL</h3>
           <div className={styles.domainRow}>
             <a href={`http://${fullDomain}`} target="_blank" rel="noreferrer" className={styles.domainUrl}>
               {fullDomain}
@@ -118,7 +118,7 @@ export default function AppDetailPage() {
         {/* Config Card */}
         <div className={`card ${styles.configCard}`}>
           <div className={styles.configHeader}>
-            <h3>⚙️ Configuration</h3>
+            <h3>Configuration</h3>
             {!editing ? (
               <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}>Edit</button>
             ) : (
@@ -163,7 +163,7 @@ export default function AppDetailPage() {
 
         {/* Agent Setup Guide */}
         <div className={`card ${styles.guideCard}`}>
-          <h3>🖥️ Connect Agent</h3>
+          <h3>Connect Agent</h3>
           <p>Run this on the device where your app is running:</p>
           <pre className={styles.codeBlock}>
 {`# Install & run the SelfHost agent

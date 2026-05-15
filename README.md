@@ -1,4 +1,4 @@
-# SelfHost 🚀
+# SelfHost
 
 Turn your own device into a web server. SelfHost is a complete platform that provides subdomain routing, WebSocket tunnels, and an elegant Next.js dashboard to manage your self-hosted applications.
 

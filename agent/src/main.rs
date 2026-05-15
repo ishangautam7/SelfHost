@@ -44,14 +44,14 @@ async fn main() {
             let agent_id =
                 agent_id.unwrap_or_else(|| format!("agent_{}", uuid::Uuid::new_v4()));
 
-            log::info!("🚀 SelfHost Agent starting...");
-            log::info!("📡 Server: {}", server);
-            log::info!("🔑 Agent ID: {}", agent_id);
+            log::info!(" SelfHost Agent starting...");
+            log::info!(" Server: {}", server);
+            log::info!(" Agent ID: {}", agent_id);
 
             let app_mgr = app_manager::AppManager::new();
 
             loop {
-                log::info!("🔌 Connecting to server...");
+                log::info!(" Connecting to server...");
                 match tunnel_client::connect_and_run(&server, &api_key, &agent_id, &app_mgr)
                     .await
                 {
@@ -63,7 +63,7 @@ async fn main() {
                     }
                 }
 
-                log::info!("⏳ Reconnecting in 5 seconds...");
+                log::info!(" Reconnecting in 5 seconds...");
                 tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
         }

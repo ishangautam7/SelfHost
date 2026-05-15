@@ -63,7 +63,7 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        log::info!("✅ Database migrations completed");
+        log::info!("Database migrations completed");
         Ok(())
     }
 

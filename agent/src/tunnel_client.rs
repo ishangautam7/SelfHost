@@ -15,7 +15,7 @@ pub async fn connect_and_run(
     let url = url::Url::parse(&url)?;
 
     let (ws_stream, _) = connect_async(url).await?;
-    log::info!("✅ WebSocket connected");
+    log::info!("WebSocket connected");
 
     let (mut write, mut read) = ws_stream.split();
 
@@ -23,8 +23,7 @@ pub async fn connect_and_run(
     let heartbeat_handle = tokio::spawn(async move {
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(30)).await;
-            let ping = TunnelMessage::Ping;
-            let msg = serde_json::to_string(&ping).unwrap();
+            let _ping = TunnelMessage::Ping;
             // We can't send through `write` here since it's moved.
             // This is handled inline below instead.
             break;
@@ -37,10 +36,10 @@ pub async fn connect_and_run(
             Ok(Message::Text(text)) => {
                 match serde_json::from_str::<TunnelMessage>(&text) {
                     Ok(TunnelMessage::AuthOk { message }) => {
-                        log::info!("🔓 Authenticated: {}", message);
+                        log::info!("Authenticated: {}", message);
                     }
                     Ok(TunnelMessage::AuthError { message }) => {
-                        log::error!("🔒 Auth failed: {}", message);
+                        log::error!("Auth failed: {}", message);
                         return Err(message.into());
                     }
                     Ok(TunnelMessage::HttpRequest {
@@ -52,7 +51,7 @@ pub async fn connect_and_run(
                         body,
                     }) => {
                         log::info!(
-                            "📥 Incoming request: {} {} (subdomain: {})",
+                            "Incoming request: {} {} (subdomain: {})",
                             method,
                             path,
                             subdomain
@@ -104,7 +103,7 @@ pub async fn connect_and_run(
                         local_port,
                     }) => {
                         log::info!(
-                            "📦 Agent command: {:?} for app {} (port {})",
+                            "Agent command: {:?} for app {} (port {})",
                             command,
                             app_name,
                             local_port

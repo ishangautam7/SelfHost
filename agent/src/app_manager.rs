@@ -12,6 +12,7 @@ pub struct AppManager {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct AppEntry {
     name: String,
     local_port: u16,
@@ -41,7 +42,7 @@ impl AppManager {
         smap.insert(subdomain, local_port);
 
         log::info!(
-            "📦 Registered app: {} (id: {}) on port {}",
+            " Registered app: {} (id: {}) on port {}",
             name,
             app_id,
             local_port
@@ -54,7 +55,7 @@ impl AppManager {
             let subdomain = entry.name.to_lowercase().replace(' ', "-");
             let mut smap = self.subdomain_map.write().unwrap();
             smap.remove(&subdomain);
-            log::info!("📦 Unregistered app: {} (id: {})", entry.name, app_id);
+            log::info!("Unregistered app: {} (id: {})", entry.name, app_id);
         }
     }
 
@@ -63,6 +64,7 @@ impl AppManager {
         smap.get(subdomain).copied()
     }
 
+    #[allow(dead_code)]
     pub fn list_apps(&self) -> Vec<(String, String, u16)> {
         let apps = self.apps.read().unwrap();
         apps.iter()

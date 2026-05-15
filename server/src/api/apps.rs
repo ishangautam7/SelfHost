@@ -73,7 +73,7 @@ pub async fn create_app(
     }
 
     let full_domain = format!("{}.{}", subdomain, state.config.base_domain);
-    log::info!("📦 App created: {} → {}", body.name, full_domain);
+    log::info!("App created: {} -> {}", body.name, full_domain);
 
     let app = App {
         id: app_id,
