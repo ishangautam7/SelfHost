@@ -1,0 +1,40 @@
+# Environment variables
+.env
+
+# Rust
+/target
+/server/target
+/agent/target
+/shared/target
+**/*.rs.bk
+
+# Node.js / Next.js
+/frontend/node_modules
+/frontend/.next
+/frontend/out
+/frontend/build
+/frontend/.swc
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/.eslintcache
+
+# Database
+/data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# OS / Editor
+.DS_Store
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
