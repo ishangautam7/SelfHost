@@ -1,12 +1,10 @@
-mod api;
 mod db;
 mod tunnel;
 mod proxy;
-mod auth;
 mod config;
 
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer, middleware::Logger};
+use actix_web::{web, App, HttpServer, HttpRequest, HttpResponse, middleware::Logger};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -14,6 +12,22 @@ pub struct AppState {
     pub db: db::Database,
     pub tunnel_manager: Arc<RwLock<tunnel::TunnelManager>>,
     pub config: config::ServerConfig,
+}
+
+async fn default_proxy_handler(
+    req: HttpRequest,
+    body: web::Bytes,
+    state: web::Data<AppState>,
+) -> HttpResponse {
+    let host = req.headers().get("Host").and_then(|h| h.to_str().ok()).unwrap_or("");
+    
+    // Check if it's a subdomain request
+    if let Some(subdomain) = proxy::extract_subdomain(host, &state.config.base_domain) {
+        return proxy::handle_proxy_request(req, body, state, &subdomain).await;
+    }
+
+    // Default fallback if not a subdomain
+    HttpResponse::NotFound().body("Not Found")
 }
 
 #[actix_web::main]
@@ -26,6 +40,8 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to database");
 
+    // We don't need migrations here if the Express API will handle them eventually, 
+    // but keeping it ensures the DB is set up if Rust starts first.
     db.run_migrations().await.expect("Failed to run migrations");
 
     let tunnel_manager = Arc::new(RwLock::new(tunnel::TunnelManager::new()));
@@ -36,12 +52,11 @@ async fn main() -> std::io::Result<()> {
         config: config.clone(),
     });
 
-    log::info!("SelfHost server starting on {}:{}", config.host, config.port);
+    log::info!("SelfHost Proxy & Tunnel server starting on {}:{}", config.host, config.port);
     log::info!("Base domain: {}", config.base_domain);
 
     HttpServer::new(move || {
-        let cors = 
-        Cors::default()
+        let cors = Cors::default()
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header()
@@ -51,34 +66,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(state.clone())
             .wrap(Logger::default())
             .wrap(cors)
-            // Auth routes (no auth middleware)
-            .service(
-                web::scope("/api/auth")
-                    .route("/register", web::post().to(api::auth::register))
-                    .route("/login", web::post().to(api::auth::login)),
-            )
-            // Protected API routes
-            .service(
-                web::scope("/api")
-                    .wrap(auth::AuthMiddlewareFactory)
-                    .route("/apps", web::get().to(api::apps::list_apps))
-                    .route("/apps", web::post().to(api::apps::create_app))
-                    .route("/apps/{id}", web::get().to(api::apps::get_app))
-                    .route("/apps/{id}", web::put().to(api::apps::update_app))
-                    .route("/apps/{id}", web::delete().to(api::apps::delete_app))
-                    .route("/apps/{id}/start", web::post().to(api::apps::start_app))
-                    .route("/apps/{id}/stop", web::post().to(api::apps::stop_app))
-                    .route("/me", web::get().to(api::auth::me))
-                    .route("/agent/config", web::get().to(api::agent::get_config)),
-            )
             // WebSocket tunnel endpoint (auth via query param)
             .route("/ws/tunnel", web::get().to(tunnel::ws_tunnel_handler))
-            // Serve frontend static files
-            .service(
-                actix_files::Files::new("/", "./static")
-                    .index_file("index.html")
-                    .default_handler(web::to(api::spa_fallback)),
-            )
+            // Default handler for all other traffic (will handle subdomains via reverse proxy)
+            .default_service(web::route().to(default_proxy_handler))
     })
     .bind(format!("{}:{}", config.host, config.port))?
     .run()
