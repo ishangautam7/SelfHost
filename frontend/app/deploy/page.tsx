@@ -20,8 +20,11 @@ export default function DeployPage() {
 
   const handleNameChange = (val: string) => {
     setName(val);
-    // Auto-generate subdomain from name
-    const sub = val.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    const sub = val
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
     setSubdomain(sub);
   };
 
@@ -31,13 +34,7 @@ export default function DeployPage() {
     setLoading(true);
 
     try {
-      await createApp({
-        name,
-        subdomain,
-        local_port: localPort,
-        resource_cpu: cpu,
-        resource_memory: memory,
-      });
+      await createApp({ name, subdomain, local_port: localPort, resource_cpu: cpu, resource_memory: memory });
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create app');
@@ -48,117 +45,182 @@ export default function DeployPage() {
 
   if (!user) return null;
 
+  const cpuPct = ((cpu - 1) / 3) * 100;
+  const memPct = ((memory - 128) / (4096 - 128)) * 100;
+
   return (
     <div className={styles.page}>
       <nav className={styles.navbar}>
         <div className={styles.navInner}>
           <Link href="/dashboard" className={styles.backLink}>
-            ← Back to Dashboard
+            ← Dashboard
+          </Link>
+          <Link href="/dashboard" className={styles.navLogo}>
+            <div className={styles.logoMark}>⬡</div>
+            <span className={styles.logoText}>SelfHost</span>
           </Link>
         </div>
       </nav>
 
       <main className={styles.main}>
-        <div className={styles.formCard}>
-          <div className={styles.formHeader}>
-            <h1>Deploy New App</h1>
-            <p>Configure your application and get a public URL instantly</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className={styles.form}>
-            {error && <div className={styles.error}>{error}</div>}
-
-            <div className={styles.field}>
-              <label className="label" htmlFor="name">App Name</label>
-              <input
-                id="name"
-                className="input"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="My Awesome App"
-                required
-              />
+        <div className={styles.layout}>
+          {/* Form */}
+          <div className={styles.formCard}>
+            <div className={styles.formHeader}>
+              <h1 className={styles.pageTitle}>Deploy New App</h1>
+              <p>Configure your app and get a public URL backed by your device</p>
             </div>
 
-            <div className={styles.field}>
-              <label className="label" htmlFor="subdomain">Subdomain</label>
-              <div className={styles.subdomainWrap}>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              {error && (
+                <div className={styles.error}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> {error}
+                </div>
+              )}
+
+              <div className={styles.field}>
+                <label className="label" htmlFor="name">App Name</label>
                 <input
-                  id="subdomain"
-                  className={`input ${styles.subdomainInput}`}
-                  value={subdomain}
-                  onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="my-app"
+                  id="name"
+                  className="input"
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="My Awesome App"
                   required
                 />
-                <span className={styles.subdomainSuffix}>.selfhost.ishangautam7.com.np</span>
               </div>
-            </div>
 
-            <div className={styles.field}>
-              <label className="label" htmlFor="port">Local Port</label>
-              <input
-                id="port"
-                className="input"
-                type="number"
-                min={1}
-                max={65535}
-                value={localPort}
-                onChange={(e) => setLocalPort(parseInt(e.target.value) || 3000)}
-                required
-              />
-              <span className={styles.hint}>The port your app runs on locally (e.g., 3000, 8080)</span>
-            </div>
-
-            <div className={styles.resourceRow}>
               <div className={styles.field}>
-                <label className="label">CPU Cores</label>
-                <div className={styles.rangeWrap}>
+                <label className="label" htmlFor="subdomain">Subdomain</label>
+                <div className={styles.subdomainWrap}>
                   <input
-                    type="range"
-                    min={1}
-                    max={4}
-                    value={cpu}
-                    onChange={(e) => setCpu(parseInt(e.target.value))}
-                    className={styles.range}
+                    id="subdomain"
+                    className={`input ${styles.subdomainInput}`}
+                    value={subdomain}
+                    onChange={(e) =>
+                      setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    }
+                    placeholder="my-app"
+                    required
                   />
-                  <span className={styles.rangeValue}>{cpu}</span>
+                  <span className={styles.subdomainSuffix}>.selfhost.ishangautam7.com.np</span>
                 </div>
               </div>
+
               <div className={styles.field}>
-                <label className="label">Memory (MB)</label>
-                <div className={styles.rangeWrap}>
-                  <input
-                    type="range"
-                    min={128}
-                    max={4096}
-                    step={128}
-                    value={memory}
-                    onChange={(e) => setMemory(parseInt(e.target.value))}
-                    className={styles.range}
-                  />
-                  <span className={styles.rangeValue}>{memory} MB</span>
+                <label className="label" htmlFor="port">Local Port</label>
+                <input
+                  id="port"
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={65535}
+                  value={localPort}
+                  onChange={(e) => setLocalPort(parseInt(e.target.value) || 3000)}
+                  required
+                />
+                <span className={styles.hint}>The port your app listens on (e.g. 3000, 8080)</span>
+              </div>
+
+              <div className={styles.resourceRow}>
+                <div className={styles.field}>
+                  <label className="label">CPU Cores</label>
+                  <div className={styles.rangeWrap}>
+                    <input
+                      type="range"
+                      min={1}
+                      max={4}
+                      value={cpu}
+                      onChange={(e) => setCpu(parseInt(e.target.value))}
+                      className={styles.range}
+                      style={{ '--val': `${cpuPct}%` } as React.CSSProperties}
+                    />
+                    <span className={styles.rangeValue}>{cpu} core{cpu > 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+
+                <div className={styles.field}>
+                  <label className="label">Memory</label>
+                  <div className={styles.rangeWrap}>
+                    <input
+                      type="range"
+                      min={128}
+                      max={4096}
+                      step={128}
+                      value={memory}
+                      onChange={(e) => setMemory(parseInt(e.target.value))}
+                      className={styles.range}
+                      style={{ '--val': `${memPct}%` } as React.CSSProperties}
+                    />
+                    <span className={styles.rangeValue}>
+                      {memory >= 1024 ? `${(memory / 1024).toFixed(1)} GB` : `${memory} MB`}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <button type="submit" className={styles.submitBtn} disabled={loading}>
+                {loading ? (
+                  <><span className="spinner" /> Deploying...</>
+                ) : (
+                  'Deploy App'
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Preview Sidebar */}
+          <div className={styles.previewCard}>
+            <h3>Live Preview</h3>
+
+            <div className={styles.previewUrl}>
+              <code>{subdomain || 'your-app'}.selfhost.ishangautam7.com.np</code>
             </div>
 
-            {/* Preview */}
-            <div className={styles.preview}>
-              <h3>Preview</h3>
-              <div className={styles.previewUrl}>
-                <code>{subdomain || 'your-app'}.selfhost.ishangautam7.com.np</code>
+            <div className={styles.previewDetails}>
+              <div className={styles.previewRow}>
+                <span className={styles.previewRowLabel}>Local port</span>
+                <span className={styles.previewRowValue}>{localPort}</span>
               </div>
-              <div className={styles.previewDetails}>
-                <span>Port: {localPort}</span>
-                <span>CPU: {cpu} core{cpu > 1 ? 's' : ''}</span>
-                <span>RAM: {memory} MB</span>
+              <div className={styles.previewRow}>
+                <span className={styles.previewRowLabel}>CPU</span>
+                <span className={styles.previewRowValue}>{cpu} core{cpu > 1 ? 's' : ''}</span>
+              </div>
+              <div className={styles.previewRow}>
+                <span className={styles.previewRowLabel}>Memory</span>
+                <span className={styles.previewRowValue}>
+                  {memory >= 1024 ? `${(memory / 1024).toFixed(1)} GB` : `${memory} MB`}
+                </span>
+              </div>
+              <div className={styles.previewRow}>
+                <span className={styles.previewRowLabel}>Status</span>
+                <span className="badge badge-stopped" style={{ fontSize: 11 }}>
+                  <span className="badge-dot" /> stopped
+                </span>
               </div>
             </div>
 
-            <button type="submit" className={`btn btn-primary btn-lg ${styles.submitBtn}`} disabled={loading}>
-              {loading ? 'Deploying...' : 'Deploy App'}
-            </button>
-          </form>
+            <div className={styles.tips}>
+              <div className={styles.tip}>
+                <span className={styles.tipIcon}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21h6"></path><path d="M12 22v-5"></path><path d="M12 17a5 5 0 0 1-5-5V9a5 5 0 0 1 10 0v3a5 5 0 0 1-5 5z"></path></svg>
+                </span>
+                <span>The agent on your device must be running to serve traffic.</span>
+              </div>
+              <div className={styles.tip}>
+                <span className={styles.tipIcon}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </span>
+                <span>Subdomains are globally unique — first-come, first-served.</span>
+              </div>
+              <div className={styles.tip}>
+                <span className={styles.tipIcon}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </span>
+                <span>You can start/stop apps anytime from the dashboard.</span>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>

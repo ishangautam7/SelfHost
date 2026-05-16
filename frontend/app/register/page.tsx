@@ -24,7 +24,6 @@ export default function RegisterPage() {
       setError('Passwords do not match');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -47,11 +46,13 @@ export default function RegisterPage() {
       <div className={styles.authBg}>
         <div className={styles.orb1} />
         <div className={styles.orb2} />
+        <div className={styles.orb3} />
       </div>
+
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
           <div className={styles.logo}>
-            <span className={styles.logoIcon}>⬡</span>
+            <div className={styles.logoMark}>⬡</div>
             <span className={styles.logoText}>SelfHost</span>
           </div>
           <h1>Create Account</h1>
@@ -59,7 +60,11 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.authForm}>
-          {error && <div className={styles.error}>{error}</div>}
+          {error && (
+            <div className={styles.error}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> {error}
+            </div>
+          )}
 
           <div className={styles.field}>
             <label className="label" htmlFor="username">Username</label>
@@ -70,6 +75,7 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Choose a username"
+              autoComplete="username"
               required
             />
           </div>
@@ -83,6 +89,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 6 characters"
+              autoComplete="new-password"
               required
             />
           </div>
@@ -96,17 +103,27 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repeat your password"
+              autoComplete="new-password"
               required
             />
           </div>
 
-          <button type="submit" className={`btn btn-primary btn-lg ${styles.submitBtn}`} disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={loading}
+          >
+            {loading ? (
+              <><span className="spinner" /> Creating account...</>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 
         <p className={styles.authFooter}>
-          Already have an account? <Link href="/login" className={styles.link}>Sign in</Link>
+          Already have an account?{' '}
+          <Link href="/login" className={styles.link}>Sign in</Link>
         </p>
       </div>
     </div>
