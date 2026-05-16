@@ -40,7 +40,7 @@ async function startServer() {
     // Run DB migrations before starting
     await runMigrations();
     
-    const host = process.env.HOST || '0.0.0.0';
+    const host = '0.0.0.0';
     const server = app.listen(port as number, host, () => {
       console.log(`Express API & Proxy running on ${host}:${port}`);
     });

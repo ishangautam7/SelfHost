@@ -28,6 +28,7 @@ app.use('/api/apps', apps_1.default);
 app.use('/api/agent', agent_1.default);
 // Health check
 app.get('/', (req, res) => res.send('OK'));
+app.get('/health', (req, res) => res.send('OK'));
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -35,7 +36,7 @@ async function startServer() {
     try {
         // Run DB migrations before starting
         await (0, db_1.runMigrations)();
-        const host = process.env.HOST || '0.0.0.0';
+        const host = '0.0.0.0';
         const server = app.listen(port, host, () => {
             console.log(`Express API & Proxy running on ${host}:${port}`);
         });
