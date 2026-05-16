@@ -30,6 +30,7 @@ app.use('/api/agent', agentRoutes);
 
 // Health check
 app.get('/', (req, res) => res.send('OK'));
+app.get('/health', (req, res) => res.send('OK'));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
