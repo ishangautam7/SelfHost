@@ -13,9 +13,6 @@ dotenv.config({ path: '../.env' });
 const app = express();
 const port = process.env.API_PORT || 3001;
 
-// Run DB migrations before starting
-runMigrations();
-
 // 1. Proxy Middleware (Must come BEFORE body parsers like express.json)
 // We need raw bodies for the proxy to forward requests transparently.
 app.use(proxyMiddleware);
@@ -34,10 +31,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-const server = app.listen(port, () => {
-  console.log(`Express API & Proxy running on port ${port}`);
-});
+async function startServer() {
+  try {
+    // Run DB migrations before starting
+    await runMigrations();
+    
+    const server = app.listen(port, () => {
+      console.log(`Express API & Proxy running on port ${port}`);
+    });
+    
+    // Initialize WebSocket Tunnel Manager
+    initTunnelManager(server);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-// Initialize WebSocket Tunnel Manager
-initTunnelManager(server);
-
+startServer();

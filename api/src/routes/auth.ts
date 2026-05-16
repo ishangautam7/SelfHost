@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db';
+import { getPool } from '../db';
 import { User } from '../models';
 import { authenticate } from '../middleware/auth';
 
@@ -15,8 +15,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User | undefined;
-    if (existingUser) {
+    const pool = getPool();
+    const existing = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
@@ -24,11 +25,13 @@ router.post('/register', async (req, res) => {
     const apiKey = `sk_${uuidv4().replace(/-/g, '')}`;
     const id = uuidv4();
 
-    db.prepare('INSERT INTO users (id, username, password_hash, api_key) VALUES (?, ?, ?, ?)')
-      .run(id, username, passwordHash, apiKey);
+    await pool.query(
+      'INSERT INTO users (id, username, password_hash, api_key) VALUES ($1, $2, $3, $4)',
+      [id, username, passwordHash, apiKey]
+    );
 
     const secret = process.env.JWT_SECRET || 'supersecretjwtkeythatshouldbechangedinprod';
-    const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
+    const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
     const token = jwt.sign({ sub: id, username, exp }, secret);
 
     res.json({ token });
@@ -45,7 +48,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User | undefined;
+    const pool = getPool();
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user = result.rows[0] as User | undefined;
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -56,7 +61,7 @@ router.post('/login', async (req, res) => {
     }
 
     const secret = process.env.JWT_SECRET || 'supersecretjwtkeythatshouldbechangedinprod';
-    const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 24 hours
+    const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
     const token = jwt.sign({ sub: user.id, username, exp }, secret);
 
     res.json({ token });
@@ -66,10 +71,12 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/me', authenticate, (req, res) => {
+router.get('/me', authenticate, async (req, res) => {
   try {
     const userId = req.user!.sub;
-    const user = db.prepare('SELECT id, username, api_key, created_at FROM users WHERE id = ?').get(userId) as any;
+    const pool = getPool();
+    const result = await pool.query('SELECT id, username, api_key, created_at FROM users WHERE id = $1', [userId]);
+    const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

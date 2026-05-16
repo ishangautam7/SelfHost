@@ -28,7 +28,7 @@ class TunnelManager {
                 ws.close();
                 return;
             }
-            const user = (0, db_1.getUserByApiKey)(apiKey);
+            const user = await (0, db_1.getUserByApiKey)(apiKey);
             if (!user) {
                 ws.send(JSON.stringify({ type: 'AuthError', payload: { message: 'Invalid API key' } }));
                 ws.close();
@@ -37,7 +37,7 @@ class TunnelManager {
             const userId = user.id;
             // Register connection
             this.senders.set(userId, ws);
-            (0, db_1.upsertTunnel)(agentId, userId, true);
+            (0, db_1.upsertTunnel)(agentId, userId, true).catch(err => console.error('DB error upserting tunnel:', err));
             console.log(`Agent ${agentId} connected for user ${user.username}`);
             // Send AuthOk
             ws.send(JSON.stringify({
@@ -55,7 +55,7 @@ class TunnelManager {
                     const msg = JSON.parse(data.toString());
                     switch (msg.type) {
                         case 'Pong':
-                            (0, db_1.upsertTunnel)(agentId, userId, true); // Update heartbeat
+                            (0, db_1.upsertTunnel)(agentId, userId, true).catch(err => console.error('DB error updating tunnel heartbeat:', err)); // Update heartbeat
                             break;
                         case 'HttpResponse':
                             const resolve = this.pendingRequests.get(msg.payload.request_id);
@@ -66,11 +66,11 @@ class TunnelManager {
                             break;
                         case 'AgentCommandResult':
                             const status = msg.payload.success ? 'running' : 'error';
-                            (0, db_1.updateAppStatus)(msg.payload.app_id, status);
+                            (0, db_1.updateAppStatus)(msg.payload.app_id, status).catch(err => console.error('DB error updating app status:', err));
                             break;
                         case 'StatusReport':
                             for (const app of msg.payload.apps) {
-                                (0, db_1.updateAppStatus)(app.app_id, app.status);
+                                (0, db_1.updateAppStatus)(app.app_id, app.status).catch(err => console.error('DB error updating app status from report:', err));
                             }
                             break;
                     }

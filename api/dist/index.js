@@ -15,8 +15,6 @@ const tunnel_1 = require("./tunnel");
 dotenv_1.default.config({ path: '../.env' });
 const app = (0, express_1.default)();
 const port = process.env.API_PORT || 3001;
-// Run DB migrations before starting
-(0, db_1.runMigrations)();
 // 1. Proxy Middleware (Must come BEFORE body parsers like express.json)
 // We need raw bodies for the proxy to forward requests transparently.
 app.use(proxy_1.proxyMiddleware);
@@ -31,8 +29,19 @@ app.use('/api/agent', agent_1.default);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-const server = app.listen(port, () => {
-    console.log(`Express API & Proxy running on port ${port}`);
-});
-// Initialize WebSocket Tunnel Manager
-(0, tunnel_1.initTunnelManager)(server);
+async function startServer() {
+    try {
+        // Run DB migrations before starting
+        await (0, db_1.runMigrations)();
+        const server = app.listen(port, () => {
+            console.log(`Express API & Proxy running on port ${port}`);
+        });
+        // Initialize WebSocket Tunnel Manager
+        (0, tunnel_1.initTunnelManager)(server);
+    }
+    catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+startServer();

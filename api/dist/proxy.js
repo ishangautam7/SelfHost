@@ -30,7 +30,7 @@ async function proxyMiddleware(req, res, next) {
         return next();
     }
     // It's a subdomain request! Look up the app.
-    const app = (0, db_1.getAppBySubdomain)(subdomain);
+    const app = await (0, db_1.getAppBySubdomain)(subdomain);
     if (!app) {
         return res.status(404).send(`No app found for subdomain: ${subdomain}.${BASE_DOMAIN}`);
     }

@@ -86,7 +86,7 @@ export class TunnelManager {
         return;
       }
 
-      const user = getUserByApiKey(apiKey);
+      const user = await getUserByApiKey(apiKey);
       if (!user) {
         ws.send(JSON.stringify({ type: 'AuthError', payload: { message: 'Invalid API key' } }));
         ws.close();
@@ -97,7 +97,7 @@ export class TunnelManager {
 
       // Register connection
       this.senders.set(userId, ws);
-      upsertTunnel(agentId, userId, true);
+      upsertTunnel(agentId, userId, true).catch(err => console.error('DB error upserting tunnel:', err));
 
       console.log(`Agent ${agentId} connected for user ${user.username}`);
 
@@ -121,7 +121,7 @@ export class TunnelManager {
           const msg = JSON.parse(data.toString()) as TunnelMessage;
           switch (msg.type) {
             case 'Pong':
-              upsertTunnel(agentId, userId, true); // Update heartbeat
+              upsertTunnel(agentId, userId, true).catch(err => console.error('DB error updating tunnel heartbeat:', err)); // Update heartbeat
               break;
             case 'HttpResponse':
               const resolve = this.pendingRequests.get(msg.payload.request_id);
@@ -132,11 +132,11 @@ export class TunnelManager {
               break;
             case 'AgentCommandResult':
               const status = msg.payload.success ? 'running' : 'error';
-              updateAppStatus(msg.payload.app_id, status);
+              updateAppStatus(msg.payload.app_id, status).catch(err => console.error('DB error updating app status:', err));
               break;
             case 'StatusReport':
               for (const app of msg.payload.apps) {
-                updateAppStatus(app.app_id, app.status);
+                updateAppStatus(app.app_id, app.status).catch(err => console.error('DB error updating app status from report:', err));
               }
               break;
           }
@@ -150,7 +150,7 @@ export class TunnelManager {
         if (this.senders.get(userId) === ws) {
           this.senders.delete(userId);
         }
-        setTunnelDisconnected(agentId);
+        setTunnelDisconnected(agentId).catch(err => console.error('DB error setting tunnel disconnected:', err));
         console.log(`Agent ${agentId} disconnected`);
       });
 
