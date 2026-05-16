@@ -84,7 +84,7 @@ class TunnelManager {
                 if (this.senders.get(userId) === ws) {
                     this.senders.delete(userId);
                 }
-                (0, db_1.setTunnelDisconnected)(agentId);
+                (0, db_1.setTunnelDisconnected)(agentId).catch(err => console.error('DB error setting tunnel disconnected:', err));
                 console.log(`Agent ${agentId} disconnected`);
             });
             ws.on('error', (err) => {
