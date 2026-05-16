@@ -11,7 +11,7 @@ import { initTunnelManager } from './tunnel';
 dotenv.config({ path: '../.env' });
 
 const app = express();
-const port = process.env.API_PORT || 3001;
+const port = process.env.PORT || process.env.API_PORT || 3001;
 
 // 1. Proxy Middleware (Must come BEFORE body parsers like express.json)
 // We need raw bodies for the proxy to forward requests transparently.
