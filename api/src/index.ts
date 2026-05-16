@@ -27,6 +27,7 @@ app.use('/api/apps', appsRoutes);
 app.use('/api/agent', agentRoutes);
 
 // Health check
+app.get('/', (req, res) => res.send('OK'));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -36,8 +37,9 @@ async function startServer() {
     // Run DB migrations before starting
     await runMigrations();
     
-    const server = app.listen(port, () => {
-      console.log(`Express API & Proxy running on port ${port}`);
+    const host = process.env.HOST || '0.0.0.0';
+    const server = app.listen(port as number, host, () => {
+      console.log(`Express API & Proxy running on ${host}:${port}`);
     });
     
     // Initialize WebSocket Tunnel Manager
