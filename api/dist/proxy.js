@@ -5,7 +5,9 @@ exports.proxyMiddleware = proxyMiddleware;
 const uuid_1 = require("uuid");
 const db_1 = require("./db");
 const tunnel_1 = require("./tunnel");
-const BASE_DOMAIN = 'api.ishangautam7.com.np';
+const BASE_DOMAIN = process.env.BASE_DOMAIN || 'selfhost.ishangautam7.com.np';
+// Allow these hosts to bypass the subdomain proxy
+const ALLOWED_API_HOSTS = ['api.ishangautam7.com.np', 'selfhost-h5ze.onrender.com'];
 function extractSubdomain(host, baseDomain) {
     const hostWithoutPort = host.split(':')[0];
     const suffix = `.${baseDomain}`;
@@ -20,6 +22,10 @@ function extractSubdomain(host, baseDomain) {
 async function proxyMiddleware(req, res, next) {
     const host = req.headers.host;
     if (!host) {
+        return next();
+    }
+    // Bypass proxy for API domains - pass directly to Express routes
+    if (ALLOWED_API_HOSTS.includes(host)) {
         return next();
     }
     // If this is an API request or dashboard request, let it pass through to regular routes

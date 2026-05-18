@@ -3,7 +3,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { getAppBySubdomain } from './db';
 import { tunnelManager } from './tunnel';
 
-const BASE_DOMAIN = 'api.ishangautam7.com.np';
+const BASE_DOMAIN = process.env.BASE_DOMAIN || 'selfhost.ishangautam7.com.np';
+
+// Allow these hosts to bypass the subdomain proxy
+const ALLOWED_API_HOSTS = ['api.ishangautam7.com.np', 'selfhost-h5ze.onrender.com'];
 
 export function extractSubdomain(host: string, baseDomain: string): string | null {
   const hostWithoutPort = host.split(':')[0];
@@ -20,6 +23,11 @@ export function extractSubdomain(host: string, baseDomain: string): string | nul
 export async function proxyMiddleware(req: Request, res: Response, next: NextFunction) {
   const host = req.headers.host;
   if (!host) {
+    return next();
+  }
+
+  // Bypass proxy for API domains - pass directly to Express routes
+  if (ALLOWED_API_HOSTS.includes(host)) {
     return next();
   }
 
