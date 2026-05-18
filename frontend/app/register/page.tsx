@@ -51,10 +51,6 @@ export default function RegisterPage() {
 
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
-          <div className={styles.logo}>
-            <div className={styles.logoMark}>⬡</div>
-            <span className={styles.logoText}>SelfHost</span>
-          </div>
           <h1>Create Account</h1>
           <p>Start hosting apps from your own device</p>
         </div>

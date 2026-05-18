@@ -122,9 +122,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  color: var(--accent-light);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
   padding: 6px 14px;
   border-radius: var(--r-full);
   font-size: 13px;
@@ -202,10 +202,10 @@
 
 /* macOS Terminal Mockup */
 .terminalFrame {
-  background: rgba(8, 8, 20, 0.75);
+  background: rgba(4, 4, 4, 0.85);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(14, 165, 233, 0.05);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(20px);
   overflow: hidden;
   transition: all var(--t-slow);
@@ -606,7 +606,7 @@
 
 .formInput:focus {
   border-color: var(--accent);
-  background: rgba(14, 165, 233, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
@@ -625,7 +625,7 @@
 }
 
 .commandBlock:hover {
-  border-color: rgba(14, 165, 233, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .commandText {
@@ -696,23 +696,23 @@
 .featureIconWrap {
   width: 48px;
   height: 48px;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-light);
+  color: var(--text-primary);
   margin-bottom: 20px;
   transition: all var(--t-base);
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.03);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.01);
 }
 
 .featureCard:hover .featureIconWrap {
-  color: white;
+  color: var(--text-inverse);
   background: var(--accent);
-  border-color: var(--accent-light);
-  box-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 

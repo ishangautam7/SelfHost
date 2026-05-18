@@ -41,10 +41,6 @@ export default function LoginPage() {
 
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
-          <div className={styles.logo}>
-            <div className={styles.logoMark}>⬡</div>
-            <span className={styles.logoText}>SelfHost</span>
-          </div>
           <h1>Welcome back</h1>
           <p>Sign in to manage your hosted applications</p>
         </div>
