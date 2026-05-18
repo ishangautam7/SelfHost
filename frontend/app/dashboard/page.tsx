@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [serverUrl, setServerUrl] = useState('ws://selfhost.ishangautam7.com.np:8080/ws/tunnel');
+  const [copiedCommand, setCopiedCommand] = useState(false);
   const router = useRouter();
 
   const showToast = (msg: string) => {
@@ -42,6 +44,18 @@ export default function DashboardPage() {
       return () => clearInterval(interval);
     }
   }, [user, loadApps]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        setServerUrl('ws://localhost:3001/ws/tunnel');
+      } else {
+        setServerUrl(`${protocol}//${hostname}/ws/tunnel`);
+      }
+    }
+  }, []);
 
   const handleStart = async (id: string, name: string) => {
     try {
@@ -78,6 +92,16 @@ export default function DashboardPage() {
     if (user?.api_key) {
       navigator.clipboard.writeText(user.api_key);
       showToast('API key copied!');
+    }
+  };
+
+  const copyCliCommand = () => {
+    if (user?.api_key) {
+      const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key}`;
+      navigator.clipboard.writeText(cmd);
+      setCopiedCommand(true);
+      showToast('CLI Command copied!');
+      setTimeout(() => setCopiedCommand(false), 2000);
     }
   };
 
@@ -155,27 +179,51 @@ export default function DashboardPage() {
 
         {/* API Key */}
         <div className={styles.apiSection}>
-          <div className={styles.apiIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+          <div className={styles.apiTop}>
+            <div className={styles.apiIcon}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+            </div>
+            <div className={styles.apiInfo}>
+              <h3>Agent API Key</h3>
+              <p>Connect the selfhost agent on your device with this key</p>
+            </div>
+            <div className={styles.apiKeyWrap}>
+              <code className={styles.apiKey}>
+                {showApiKey ? user.api_key : '•'.repeat(32)}
+              </code>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowApiKey((v) => !v)}
+              >
+                {showApiKey ? 'Hide' : 'Show'}
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={copyApiKey}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 4}}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copy Key
+              </button>
+            </div>
           </div>
-          <div className={styles.apiInfo}>
-            <h3>Agent API Key</h3>
-            <p>Connect the selfhost agent on your device with this key</p>
-          </div>
-          <div className={styles.apiKeyWrap}>
-            <code className={styles.apiKey}>
-              {showApiKey ? user.api_key : '•'.repeat(32)}
-            </code>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setShowApiKey((v) => !v)}
-            >
-              {showApiKey ? 'Hide' : 'Show'}
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={copyApiKey}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 4}}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Copy
-            </button>
+
+          <div className={styles.cliContainer}>
+            <div className={styles.cliTitle}>Direct Agent Connection Command</div>
+            <div className={styles.commandBlock}>
+              <code className={styles.commandText}>
+                agent connect --server {serverUrl} --api-key {user.api_key}
+              </code>
+              <button className="btn btn-secondary btn-sm" onClick={copyCliCommand}>
+                {copiedCommand ? (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{marginRight: 4}}><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: 4}}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Command
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

@@ -14,7 +14,7 @@
   /* Borders */
   --border: rgba(255, 255, 255, 0.07);
   --border-hover: rgba(255, 255, 255, 0.15);
-  --border-focus: rgba(123, 97, 255, 0.6);
+  --border-focus: rgba(14, 165, 233, 0.5);
 
   /* Text */
   --text-primary: #eeeeff;
@@ -22,13 +22,13 @@
   --text-muted: #44445a;
   --text-inverse: #0a0a18;
 
-  /* Accent — violet/cyan duotone */
-  --accent: #7b61ff;
-  --accent-dim: #5a44cc;
-  --accent-light: #a78bfa;
-  --accent-glow: rgba(123, 97, 255, 0.35);
-  --accent-gradient: linear-gradient(135deg, #7b61ff 0%, #00d9f5 100%);
-  --accent-gradient-hover: linear-gradient(135deg, #a78bfa 0%, #22eeff 100%);
+  /* Accent — classic sky blue */
+  --accent: #0ea5e9;
+  --accent-dim: #0284c7;
+  --accent-light: #38bdf8;
+  --accent-glow: rgba(14, 165, 233, 0.2);
+  --accent-gradient: #0ea5e9;
+  --accent-gradient-hover: #38bdf8;
 
   /* Semantic colours */
   --success: #00e5a0;
@@ -105,7 +105,7 @@ input, textarea, select { font-family: inherit; outline: none; }
   height: 900px;
   top: -300px;
   left: -200px;
-  background: radial-gradient(circle, rgba(123, 97, 255, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.06) 0%, transparent 70%);
   animation: orb-drift-1 18s ease-in-out infinite alternate;
 }
 
@@ -116,7 +116,7 @@ input, textarea, select { font-family: inherit; outline: none; }
   height: 700px;
   bottom: -200px;
   right: -100px;
-  background: radial-gradient(circle, rgba(0, 217, 245, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 217, 245, 0.04) 0%, transparent 70%);
   animation: orb-drift-2 22s ease-in-out infinite alternate;
 }
 
@@ -168,12 +168,12 @@ input, textarea, select { font-family: inherit; outline: none; }
 .btn-primary {
   background: var(--accent);
   color: white;
-  border-color: rgba(123, 97, 255, 0.3);
-  box-shadow: 0 2px 12px rgba(123, 97, 255, 0.25);
+  border-color: rgba(14, 165, 233, 0.3);
+  box-shadow: 0 2px 12px rgba(14, 165, 233, 0.15);
 }
 .btn-primary:hover {
   background: var(--accent-light);
-  box-shadow: 0 4px 24px rgba(123, 97, 255, 0.5);
+  box-shadow: 0 4px 24px rgba(14, 165, 233, 0.3);
   transform: translateY(-1px);
 }
 
@@ -181,11 +181,11 @@ input, textarea, select { font-family: inherit; outline: none; }
   background: var(--accent-gradient);
   color: white;
   border: none;
-  box-shadow: 0 4px 20px rgba(123, 97, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
 }
 .btn-gradient:hover {
   background: var(--accent-gradient-hover);
-  box-shadow: 0 6px 32px rgba(123, 97, 255, 0.5);
+  box-shadow: 0 6px 32px rgba(14, 165, 233, 0.3);
   transform: translateY(-2px);
 }
 

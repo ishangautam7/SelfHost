@@ -122,8 +122,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(123, 97, 255, 0.08);
-  border: 1px solid rgba(123, 97, 255, 0.2);
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.2);
   color: var(--accent-light);
   padding: 6px 14px;
   border-radius: var(--r-full);
@@ -144,10 +144,7 @@
 }
 
 .heroTitle span {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent);
   position: relative;
 }
 
@@ -158,7 +155,7 @@
   bottom: -4px;
   width: 100%;
   height: 2px;
-  background: var(--accent-gradient);
+  background: var(--accent);
   opacity: 0.3;
 }
 
@@ -208,7 +205,7 @@
   background: rgba(8, 8, 20, 0.75);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(123, 97, 255, 0.08);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(14, 165, 233, 0.05);
   backdrop-filter: blur(20px);
   overflow: hidden;
   transition: all var(--t-slow);
@@ -407,7 +404,7 @@
 .docsSection {
   padding: 100px 24px;
   border-top: 1px solid var(--border);
-  background: radial-gradient(100% 50% at 50% 0%, rgba(123, 97, 255, 0.02) 0%, transparent 100%);
+  background: transparent;
   position: relative;
   z-index: 2;
 }
@@ -458,7 +455,7 @@
   top: 40px;
   bottom: 40px;
   width: 2px;
-  background: linear-gradient(to bottom, var(--accent) 0%, var(--border) 60%, transparent 100%);
+  background: var(--border);
 }
 
 @media (max-width: 768px) {
@@ -609,7 +606,7 @@
 
 .formInput:focus {
   border-color: var(--accent);
-  background: rgba(123, 97, 255, 0.05);
+  background: rgba(14, 165, 233, 0.05);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
@@ -628,7 +625,7 @@
 }
 
 .commandBlock:hover {
-  border-color: rgba(123, 97, 255, 0.3);
+  border-color: rgba(14, 165, 233, 0.3);
 }
 
 .commandText {
@@ -699,8 +696,8 @@
 .featureIconWrap {
   width: 48px;
   height: 48px;
-  background: rgba(123, 97, 255, 0.08);
-  border: 1px solid rgba(123, 97, 255, 0.2);
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.2);
   border-radius: var(--r-sm);
   display: flex;
   align-items: center;
@@ -708,14 +705,14 @@
   color: var(--accent-light);
   margin-bottom: 20px;
   transition: all var(--t-base);
-  box-shadow: 0 0 10px rgba(123, 97, 255, 0.05);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.03);
 }
 
 .featureCard:hover .featureIconWrap {
   color: white;
   background: var(--accent);
   border-color: var(--accent-light);
-  box-shadow: 0 0 20px rgba(123, 97, 255, 0.4);
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
   transform: translateY(-2px);
 }
 

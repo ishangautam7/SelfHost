@@ -218,10 +218,6 @@ export default function LandingPage() {
         <div className={styles.heroInner}>
           {/* Left Hero Content */}
           <div className={styles.heroLeft}>
-            <div className={styles.badgeHighlight}>
-              <span className="badge-dot" style={{ background: 'var(--accent)' }} />
-              Secure WebSocket Tunneling Platform
-            </div>
             <h1 className={styles.heroTitle}>
               Turn your device into <span>the cloud</span>.
             </h1>
@@ -293,10 +289,6 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className={styles.browserBody}>
-                  <div className={styles.liveIndicator}>
-                    <span className={styles.liveIndicatorDot} />
-                    Live & Encrypted
-                  </div>
                   <h4 className={styles.browserTitle}>React App Hosted Locally</h4>
                   <p className={styles.browserDesc}>
                     Tunnelling localhost:3000 securely. Bypassing firewalls and NAT dynamically.
@@ -465,7 +457,7 @@ export default function LandingPage() {
                 </div>
 
                 <div style={{ marginTop: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
-                  💡 Once the agent is connected, head to the <Link href="/deploy" style={{ color: 'var(--accent-light)', textDecoration: 'underline' }}>Deploy New App</Link> page, register local port <strong>{builderPort || '3000'}</strong>, and get your public subdomain immediately!
+                  Once the agent is connected, head to the <Link href="/deploy" style={{ color: 'var(--accent-light)', textDecoration: 'underline' }}>Deploy New App</Link> page, register local port <strong>{builderPort || '3000'}</strong>, and get your public subdomain immediately!
                 </div>
 
               </div>

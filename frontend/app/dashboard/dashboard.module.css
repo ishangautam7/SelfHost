@@ -36,23 +36,20 @@
 .logoMark {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, #7b61ff, #00d9f5);
+  background: var(--accent);
   border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  box-shadow: 0 2px 12px rgba(123, 97, 255, 0.4);
+  box-shadow: 0 2px 12px rgba(14, 165, 233, 0.2);
   flex-shrink: 0;
 }
 
 .logoText {
   font-size: 17px;
   font-weight: 800;
-  background: linear-gradient(135deg, #eeeeff, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   letter-spacing: -0.3px;
 }
 
@@ -102,10 +99,7 @@
 }
 
 .welcomeText h1 span {
-  background: linear-gradient(135deg, #a78bfa, #00d9f5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent);
 }
 
 .welcomeText p {
@@ -186,20 +180,20 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 20px 24px;
+  padding: 24px;
   backdrop-filter: blur(20px);
   display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
 }
 
 .apiIcon {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(123,97,255,0.2), rgba(0,217,245,0.15));
-  border: 1px solid rgba(123, 97, 255, 0.3);
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(14, 165, 233, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,8 +229,8 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   color: var(--accent-light);
-  background: rgba(123, 97, 255, 0.1);
-  border: 1px solid rgba(123, 97, 255, 0.2);
+  background: rgba(14, 165, 233, 0.05);
+  border: 1px solid rgba(14, 165, 233, 0.15);
   padding: 8px 14px;
   border-radius: var(--r-sm);
   max-width: 340px;
@@ -347,8 +341,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 14px;
-  background: rgba(123, 97, 255, 0.06);
-  border: 1px solid rgba(123, 97, 255, 0.15);
+  background: rgba(14, 165, 233, 0.05);
+  border: 1px solid rgba(14, 165, 233, 0.15);
   border-radius: var(--r-sm);
 }
 
@@ -445,4 +439,65 @@
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.apiTop {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.cliContainer {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.cliTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.commandBlock {
+  background: #040409;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all var(--t-base);
+  width: 100%;
+}
+
+.commandBlock:hover {
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+.commandText {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow-x: auto;
+  flex-grow: 1;
+}
+
+.commandText::-webkit-scrollbar {
+  height: 4px;
+}
+
+.commandText::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-full);
 }
