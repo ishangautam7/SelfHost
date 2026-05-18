@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
+import { API_BASE } from './lib/api';
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -29,19 +30,22 @@ export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   // Dynamic Server URL Calculation
-  const [serverUrl, setServerUrl] = useState('ws://selfhost.ishangautam7.com.np:8080/ws/tunnel');
+  const [serverUrl, setServerUrl] = useState('ws://localhost:3001/ws/tunnel');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        setServerUrl(`ws://localhost:3001/ws/tunnel`);
-      } else {
-        // Default production routing
-        setServerUrl(`${protocol}//${hostname}/ws/tunnel`);
+      let wsUrl = 'ws://localhost:3001/ws/tunnel';
+      if (API_BASE) {
+        try {
+          const url = new URL(API_BASE);
+          const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl = `${wsProtocol}//${url.host}/ws/tunnel`;
+        } catch {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl = `${protocol}//${window.location.hostname}/ws/tunnel`;
+        }
       }
+      setServerUrl(wsUrl);
     }
   }, []);
 

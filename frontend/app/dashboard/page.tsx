@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { App, listApps, startApp, stopApp, deleteApp } from '../lib/api';
+import { App, listApps, startApp, stopApp, deleteApp, API_BASE } from '../lib/api';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 
@@ -47,13 +47,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        setServerUrl('ws://localhost:3001/ws/tunnel');
-      } else {
-        setServerUrl(`${protocol}//${hostname}/ws/tunnel`);
+      let wsUrl = 'ws://localhost:3001/ws/tunnel';
+      if (API_BASE) {
+        try {
+          const url = new URL(API_BASE);
+          const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl = `${wsProtocol}//${url.host}/ws/tunnel`;
+        } catch {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl = `${protocol}//${window.location.hostname}/ws/tunnel`;
+        }
       }
+      setServerUrl(wsUrl);
     }
   }, []);
 
