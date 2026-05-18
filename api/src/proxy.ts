@@ -13,7 +13,7 @@ export function extractSubdomain(host: string, baseDomain: string): string | nul
   const suffix = `.${baseDomain}`;
   if (hostWithoutPort.endsWith(suffix) && hostWithoutPort.length > suffix.length) {
     const subdomain = hostWithoutPort.slice(0, hostWithoutPort.length - suffix.length);
-    if (subdomain && !subdomain.includes('.')) {
+    if (subdomain) {
       return subdomain;
     }
   }

@@ -33,9 +33,21 @@ router.post('/', async (req, res) => {
     const id = uuidv4();
 
     const pool = getPool();
+
+    // Fetch the logged-in user's username from db
+    const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const username = userResult.rows[0].username;
+
+    // Sanitize app name subdomain and build nested format: app.username
+    const cleanSub = subdomain.split('.')[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const fullSubdomain = `${cleanSub}.${username}`;
+
     await pool.query(
       'INSERT INTO apps (id, user_id, name, subdomain, local_port, resource_cpu, resource_memory) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [id, userId, name, subdomain, local_port, cpu, memory]
+      [id, userId, name, fullSubdomain, local_port, cpu, memory]
     );
 
     const result = await pool.query('SELECT * FROM apps WHERE id = $1', [id]);

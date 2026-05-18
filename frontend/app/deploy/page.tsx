@@ -103,7 +103,7 @@ export default function DeployPage() {
                     placeholder="my-app"
                     required
                   />
-                  <span className={styles.subdomainSuffix}>.selfhost.ishangautam7.com.np</span>
+                  <span className={styles.subdomainSuffix}>.{user.username}.selfhost.ishangautam7.com.np</span>
                 </div>
               </div>
 
@@ -174,7 +174,7 @@ export default function DeployPage() {
             <h3>Live Preview</h3>
 
             <div className={styles.previewUrl}>
-              <code>{subdomain || 'your-app'}.selfhost.ishangautam7.com.np</code>
+              <code>{subdomain || 'your-app'}.{user.username}.selfhost.ishangautam7.com.np</code>
             </div>
 
             <div className={styles.previewDetails}>
