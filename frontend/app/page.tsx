@@ -415,7 +415,7 @@ export default function LandingPage() {
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Local Target Port</label>
                     <input
-                      type="number"
+                      type=""
                       className={styles.formInput}
                       placeholder="e.g. 3000"
                       value={builderPort}
