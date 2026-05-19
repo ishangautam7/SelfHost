@@ -166,11 +166,19 @@ export default function AppDetailPage() {
           <h3>Connect Agent</h3>
           <p>Run this on the device where your app is running:</p>
           <pre className={styles.codeBlock}>
-{`# Install & run the SelfHost agent
-cargo run --bin agent -- connect \\
-  --server ws://YOUR_SERVER:8080/ws/tunnel \\
+            {`cargo run --bin agent -- connect \\
+  --server wss://api.ishangautam7.com.np/ws/tunnel \\
   --api-key ${user.api_key}`}
           </pre>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigator.clipboard.writeText(
+              `cargo run --bin agent -- connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}`
+            )}
+          >
+            Copy Command
+          </button>
           <p className={styles.guideNote}>
             The agent will automatically forward traffic from <code>{fullDomain}</code> to <code>localhost:{app.local_port}</code>
           </p>
