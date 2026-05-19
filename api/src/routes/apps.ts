@@ -41,9 +41,9 @@ router.post('/', async (req, res) => {
     }
     const username = userResult.rows[0].username;
 
-    // Sanitize app name subdomain and build nested format: app.username
+    // Sanitize app name subdomain and build flat format: app-username (no dots, so wildcard SSL works)
     const cleanSub = subdomain.split('.')[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
-    const fullSubdomain = `${cleanSub}.${username}`;
+    const fullSubdomain = `${cleanSub}-${username}`;
 
     await pool.query(
       'INSERT INTO apps (id, user_id, name, subdomain, local_port, resource_cpu, resource_memory) VALUES ($1, $2, $3, $4, $5, $6, $7)',
