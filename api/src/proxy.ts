@@ -34,6 +34,7 @@ export async function proxyMiddleware(req: Request, res: Response, next: NextFun
   // If this is an API request or dashboard request, let it pass through to regular routes
   // But actually, we only intercept if we detect a valid subdomain for our app.
   const subdomain = extractSubdomain(host, BASE_DOMAIN);
+  console.log(`[Proxy] Detected request for host: ${host}, extracted subdomain: ${subdomain}, BASE_DOMAIN: ${BASE_DOMAIN}`);
 
   if (!subdomain) {
     // If not a subdomain matching our base domain, pass to normal API routes
