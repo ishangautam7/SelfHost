@@ -19,14 +19,30 @@ pub async fn connect_and_run(
 
     let (mut write, mut read) = ws_stream.split();
 
-    // Spawn heartbeat task
+    // Create a thread-safe channel for sending messages to the WebSocket
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<Message>(32);
+
+    // Dedicated writer task to handle sending messages sequentially
+    let writer_handle = tokio::spawn(async move {
+        while let Some(msg) = rx.recv().await {
+            if write.send(msg).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Active heartbeat sender task (sends Ping every 30 seconds)
+    let tx_heartbeat = tx.clone();
     let heartbeat_handle = tokio::spawn(async move {
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(30)).await;
-            let _ping = TunnelMessage::Ping;
-            // We can't send through `write` here since it's moved.
-            // This is handled inline below instead.
-            break;
+            log::debug!("Sending heartbeat Ping");
+            let ping = TunnelMessage::Ping;
+            if let Ok(msg) = serde_json::to_string(&ping) {
+                if tx_heartbeat.send(Message::Text(msg.into())).await.is_err() {
+                    break;
+                }
+            }
         }
     });
 
@@ -62,8 +78,7 @@ pub async fn connect_and_run(
 
                         let response = if let Some(port) = local_port {
                             // Forward to local app
-                            forward_to_local(port, &method, &path, &headers, body.as_deref())
-                                .await
+                            forward_to_local(port, &method, &path, &headers, body.as_deref()).await
                         } else {
                             // No app found for this subdomain
                             TunnelMessage::HttpResponse {
@@ -91,7 +106,7 @@ pub async fn connect_and_run(
                         };
 
                         let msg = serde_json::to_string(&response).unwrap();
-                        if write.send(Message::Text(msg.into())).await.is_err() {
+                        if tx.send(Message::Text(msg.into())).await.is_err() {
                             log::error!("Failed to send response through tunnel");
                             break;
                         }
@@ -112,7 +127,10 @@ pub async fn connect_and_run(
                         let (success, message) = match command {
                             shared::tunnel::AgentCommandType::Start => {
                                 app_mgr.register_app(&app_id, &app_name, local_port);
-                                (true, format!("App {} registered on port {}", app_name, local_port))
+                                (
+                                    true,
+                                    format!("App {} registered on port {}", app_name, local_port),
+                                )
                             }
                             shared::tunnel::AgentCommandType::Stop => {
                                 app_mgr.unregister_app(&app_id);
@@ -131,14 +149,14 @@ pub async fn connect_and_run(
                             message,
                         };
                         let msg = serde_json::to_string(&result).unwrap();
-                        if write.send(Message::Text(msg.into())).await.is_err() {
+                        if tx.send(Message::Text(msg.into())).await.is_err() {
                             break;
                         }
                     }
                     Ok(TunnelMessage::Ping) => {
                         let pong = TunnelMessage::Pong;
                         let msg = serde_json::to_string(&pong).unwrap();
-                        let _ = write.send(Message::Text(msg.into())).await;
+                        let _ = tx.send(Message::Text(msg.into())).await;
                     }
                     Ok(other) => {
                         log::debug!("Received: {:?}", other);
@@ -149,7 +167,7 @@ pub async fn connect_and_run(
                 }
             }
             Ok(Message::Ping(data)) => {
-                let _ = write.send(Message::Pong(data)).await;
+                let _ = tx.send(Message::Pong(data)).await;
             }
             Ok(Message::Close(_)) => {
                 log::info!("Server closed connection");
@@ -164,6 +182,7 @@ pub async fn connect_and_run(
     }
 
     heartbeat_handle.abort();
+    writer_handle.abort();
     Ok(())
 }
 
