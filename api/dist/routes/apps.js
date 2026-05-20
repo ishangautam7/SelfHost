@@ -22,12 +22,10 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const userId = req.user.sub;
-        const { name, subdomain, local_port, agent_id, resource_cpu, resource_memory } = req.body;
+        const { name, subdomain, local_port, agent_id } = req.body;
         if (!name || !subdomain || !local_port) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
-        const cpu = resource_cpu || 1;
-        const memory = resource_memory || 512;
         const id = (0, uuid_1.v4)();
         const pool = (0, db_1.getPool)();
         // Fetch the logged-in user's username from db
@@ -47,7 +45,7 @@ router.post('/', async (req, res) => {
         // Sanitize app name subdomain and build flat format: app-username (no dots, so wildcard SSL works)
         const cleanSub = subdomain.split('.')[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
         const fullSubdomain = `${cleanSub}-${username}`;
-        await pool.query('INSERT INTO apps (id, user_id, agent_id, name, subdomain, local_port, resource_cpu, resource_memory) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', [id, userId, targetAgentId, name, fullSubdomain, local_port, cpu, memory]);
+        await pool.query('INSERT INTO apps (id, user_id, agent_id, name, subdomain, local_port) VALUES ($1, $2, $3, $4, $5, $6)', [id, userId, targetAgentId, name, fullSubdomain, local_port]);
         const result = await pool.query('SELECT * FROM apps WHERE id = $1', [id]);
         res.json(result.rows[0]);
     }
@@ -86,18 +84,12 @@ router.put('/:id', async (req, res) => {
         if (!app) {
             return res.status(404).json({ error: 'App not found' });
         }
-        const { name, local_port, resource_cpu, resource_memory } = req.body;
+        const { name, local_port } = req.body;
         if (name !== undefined) {
             await pool.query('UPDATE apps SET name = $1 WHERE id = $2', [name, appId]);
         }
         if (local_port !== undefined) {
             await pool.query('UPDATE apps SET local_port = $1 WHERE id = $2', [local_port, appId]);
-        }
-        if (resource_cpu !== undefined) {
-            await pool.query('UPDATE apps SET resource_cpu = $1 WHERE id = $2', [resource_cpu, appId]);
-        }
-        if (resource_memory !== undefined) {
-            await pool.query('UPDATE apps SET resource_memory = $1 WHERE id = $2', [resource_memory, appId]);
         }
         res.json({ message: 'App updated successfully' });
     }

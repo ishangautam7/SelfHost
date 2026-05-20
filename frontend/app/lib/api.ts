@@ -15,8 +15,6 @@ export interface App {
   subdomain: string;
   local_port: number;
   status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error';
-  resource_cpu: number;
-  resource_memory: number;
   created_at: string;
 }
 
@@ -25,8 +23,6 @@ export interface CreateAppRequest {
   subdomain: string;
   local_port: number;
   agent_id?: string;
-  resource_cpu?: number;
-  resource_memory?: number;
 }
 
 // ─── Token helpers ────────────────────────────────────────────────────

@@ -113,8 +113,6 @@ export default function DashboardPage() {
   if (authLoading || !user) return null;
 
   const runningCount = apps.filter((a) => a.status === 'running').length;
-  const totalCpu = apps.reduce((s, a) => s + a.resource_cpu, 0);
-  const totalMem = apps.reduce((s, a) => s + a.resource_memory, 0);
 
   return (
     <div className={styles.page}>
@@ -163,22 +161,6 @@ export default function DashboardPage() {
             </span>
             <span className={`${styles.statValue} ${styles.green}`}>{runningCount}</span>
             <span className={styles.statLabel}>Running</span>
-          </div>
-          <div className={styles.stat}>
-            <span className={styles.statIcon}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            </span>
-            <span className={`${styles.statValue} ${styles.cyan}`}>{totalCpu}</span>
-            <span className={styles.statLabel}>CPU Cores</span>
-          </div>
-          <div className={styles.stat}>
-            <span className={styles.statIcon}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-            </span>
-            <span className={`${styles.statValue} ${styles.purple}`}>
-              {totalMem >= 1024 ? `${(totalMem / 1024).toFixed(1)}G` : `${totalMem}M`}
-            </span>
-            <span className={styles.statLabel}>Memory</span>
           </div>
         </div>
 
@@ -291,14 +273,12 @@ export default function DashboardPage() {
                     <span className={styles.metaLabel}>Port</span>
                     <span>{app.local_port}</span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>CPU</span>
-                    <span>{app.resource_cpu} core{app.resource_cpu > 1 ? 's' : ''}</span>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>RAM</span>
-                    <span>{app.resource_memory} MB</span>
-                  </div>
+                  {app.agent_id && (
+                    <div className={styles.metaItem}>
+                      <span className={styles.metaLabel}>Agent</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: 11 }}>{app.agent_id}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.appActions}>

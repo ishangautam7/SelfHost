@@ -13,8 +13,6 @@ export interface App {
   subdomain: string;
   local_port: number;
   status: string;
-  resource_cpu: number;
-  resource_memory: number;
   created_at: string;
 }
 

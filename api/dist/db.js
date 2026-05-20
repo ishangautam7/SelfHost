@@ -39,14 +39,14 @@ async function runMigrations() {
         subdomain TEXT UNIQUE NOT NULL,
         local_port INTEGER NOT NULL,
         status TEXT DEFAULT 'stopped',
-        resource_cpu INTEGER DEFAULT 1,
-        resource_memory INTEGER DEFAULT 512,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
-        // Ensure agent_id column exists on existing databases
+        // Ensure agent_id column exists on existing databases and drop resource columns
         await client.query(`
       ALTER TABLE apps ADD COLUMN IF NOT EXISTS agent_id TEXT;
+      ALTER TABLE apps DROP COLUMN IF EXISTS resource_cpu;
+      ALTER TABLE apps DROP COLUMN IF EXISTS resource_memory;
     `);
         await client.query(`
       CREATE TABLE IF NOT EXISTS tunnels (
