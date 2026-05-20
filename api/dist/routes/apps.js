@@ -126,8 +126,7 @@ router.post('/:id/start', async (req, res) => {
         if (!app) {
             return res.status(404).json({ error: 'App not found' });
         }
-        await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['starting', appId]);
-        // Dispatch command to the target agent
+        // Discover target agent if not bound
         let targetAgentId = app.agent_id;
         if (!targetAgentId) {
             const agentResult = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 AND is_connected = 1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
@@ -135,9 +134,11 @@ router.post('/:id/start', async (req, res) => {
                 targetAgentId = agentResult.rows[0].agent_id;
             }
         }
-        if (targetAgentId) {
-            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
+        if (!targetAgentId) {
+            return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
         }
+        await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['starting', targetAgentId, appId]);
+        tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
         res.json({ message: 'App start requested' });
     }
     catch (err) {
@@ -155,8 +156,7 @@ router.post('/:id/stop', async (req, res) => {
         if (!app) {
             return res.status(404).json({ error: 'App not found' });
         }
-        await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['stopping', appId]);
-        // Dispatch command to the target agent
+        // Discover target agent if not bound
         let targetAgentId = app.agent_id;
         if (!targetAgentId) {
             const agentResult = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 AND is_connected = 1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
@@ -164,9 +164,11 @@ router.post('/:id/stop', async (req, res) => {
                 targetAgentId = agentResult.rows[0].agent_id;
             }
         }
-        if (targetAgentId) {
-            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
+        if (!targetAgentId) {
+            return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
         }
+        await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['stopping', targetAgentId, appId]);
+        tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
         res.json({ message: 'App stop requested' });
     }
     catch (err) {

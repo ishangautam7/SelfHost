@@ -151,9 +151,7 @@ router.post('/:id/start', async (req, res) => {
       return res.status(404).json({ error: 'App not found' });
     }
 
-    await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['starting', appId]);
-
-    // Dispatch command to the target agent
+    // Discover target agent if not bound
     let targetAgentId = app.agent_id;
     if (!targetAgentId) {
       const agentResult = await pool.query(
@@ -165,9 +163,13 @@ router.post('/:id/start', async (req, res) => {
       }
     }
 
-    if (targetAgentId) {
-      tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
+    if (!targetAgentId) {
+      return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
     }
+
+    await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['starting', targetAgentId, appId]);
+
+    tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
 
     res.json({ message: 'App start requested' });
   } catch (err) {
@@ -188,9 +190,7 @@ router.post('/:id/stop', async (req, res) => {
       return res.status(404).json({ error: 'App not found' });
     }
 
-    await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['stopping', appId]);
-
-    // Dispatch command to the target agent
+    // Discover target agent if not bound
     let targetAgentId = app.agent_id;
     if (!targetAgentId) {
       const agentResult = await pool.query(
@@ -202,9 +202,13 @@ router.post('/:id/stop', async (req, res) => {
       }
     }
 
-    if (targetAgentId) {
-      tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
+    if (!targetAgentId) {
+      return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
     }
+
+    await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['stopping', targetAgentId, appId]);
+
+    tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
 
     res.json({ message: 'App stop requested' });
   } catch (err) {
