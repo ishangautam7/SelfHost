@@ -160,62 +160,57 @@
   color: var(--text-muted);
 }
 
-/* Resource sliders */
-.resourceRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* Warning Box */
+.warningBox {
+  background: rgba(229, 62, 62, 0.08);
+  border: 1px solid rgba(229, 62, 62, 0.25);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-@media (max-width: 480px) {
-  .resourceRow { grid-template-columns: 1fr; }
-}
-
-.rangeWrap {
+.warningHeader {
   display: flex;
   align-items: center;
-  gap: 14px;
-}
-
-.range {
-  flex: 1;
-  height: 6px;
-  -webkit-appearance: none;
-  background: linear-gradient(
-    to right,
-    var(--accent) 0%,
-    var(--accent) var(--val, 25%),
-    var(--border) var(--val, 25%),
-    var(--border) 100%
-  );
-  border-radius: var(--r-full);
-  outline: none;
-  cursor: pointer;
-}
-
-.range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: box-shadow 0.15s;
-}
-
-.range::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
-}
-
-.rangeValue {
+  gap: 8px;
+  color: #fc8181;
   font-size: 14px;
-  font-weight: 700;
-  color: var(--accent-light);
-  min-width: 56px;
-  text-align: right;
-  white-space: nowrap;
+}
+
+.warningIcon {
+  font-size: 16px;
+}
+
+.warningText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Single Agent Badge */
+.singleAgentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(72, 187, 120, 0.08);
+  border: 1px solid rgba(72, 187, 120, 0.25);
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.agentActiveDot {
+  width: 8px;
+  height: 8px;
+  background-color: #48bb78;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(72, 187, 120, 0.6);
+  display: inline-block;
 }
 
 /* Submit */

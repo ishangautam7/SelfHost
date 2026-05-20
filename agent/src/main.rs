@@ -29,6 +29,42 @@ enum Commands {
     },
 }
 
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::Path;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct LocalAgentConfig {
+    agent_id: String,
+}
+
+fn get_or_create_agent_id(cli_agent_id: Option<String>) -> String {
+    if let Some(id) = cli_agent_id {
+        return id;
+    }
+
+    let config_path = Path::new("agent_config.json");
+    if config_path.exists() {
+        if let Ok(content) = fs::read_to_string(config_path) {
+            if let Ok(config) = serde_json::from_str::<LocalAgentConfig>(&content) {
+                log::info!("Loaded persistent agent ID from agent_config.json: {}", config.agent_id);
+                return config.agent_id;
+            }
+        }
+    }
+
+    let new_id = format!("agent_{}", uuid::Uuid::new_v4());
+    let config = LocalAgentConfig {
+        agent_id: new_id.clone(),
+    };
+    if let Ok(content) = serde_json::to_string_pretty(&config) {
+        if let Ok(_) = fs::write(config_path, content) {
+            log::info!("Generated and saved new persistent agent ID to agent_config.json: {}", new_id);
+        }
+    }
+    new_id
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -41,8 +77,7 @@ async fn main() {
             api_key,
             agent_id,
         } => {
-            let agent_id =
-                agent_id.unwrap_or_else(|| format!("agent_{}", uuid::Uuid::new_v4()));
+            let agent_id = get_or_create_agent_id(agent_id);
 
             log::info!(" SelfHost Agent starting...");
             log::info!(" Server: {}", server);

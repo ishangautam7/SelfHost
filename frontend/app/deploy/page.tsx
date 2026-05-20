@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { createApp } from '../lib/api';
+import { createApp, listActiveAgents, ActiveAgent } from '../lib/api';
 import Link from 'next/link';
 import styles from './deploy.module.css';
 
@@ -13,10 +13,23 @@ export default function DeployPage() {
   const [name, setName] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [localPort, setLocalPort] = useState(3000);
-  const [cpu, setCpu] = useState(1);
-  const [memory, setMemory] = useState(512);
+  const [agents, setAgents] = useState<ActiveAgent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      listActiveAgents()
+        .then((data) => {
+          setAgents(data);
+          if (data.length > 0) {
+            setSelectedAgent(data[0].agent_id);
+          }
+        })
+        .catch((err) => console.error('Failed to load active agents:', err));
+    }
+  }, [user]);
 
   const handleNameChange = (val: string) => {
     setName(val);
@@ -34,7 +47,7 @@ export default function DeployPage() {
     setLoading(true);
 
     try {
-      await createApp({ name, subdomain, local_port: localPort, resource_cpu: cpu, resource_memory: memory });
+      await createApp({ name, subdomain, local_port: localPort, agent_id: selectedAgent || undefined });
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create app');
@@ -44,9 +57,6 @@ export default function DeployPage() {
   };
 
   if (!user) return null;
-
-  const cpuPct = ((cpu - 1) / 3) * 100;
-  const memPct = ((memory - 128) / (4096 - 128)) * 100;
 
   return (
     <div className={styles.page}>
@@ -122,42 +132,43 @@ export default function DeployPage() {
                 <span className={styles.hint}>The port your app listens on (e.g. 3000, 8080)</span>
               </div>
 
-              <div className={styles.resourceRow}>
+              {/* Agent Selection */}
+              {agents.length === 0 ? (
+                <div className={styles.warningBox}>
+                  <div className={styles.warningHeader}>
+                    <span className={styles.warningIcon}>⚠️</span>
+                    <strong>No active agents connected</strong>
+                  </div>
+                  <p className={styles.warningText}>
+                    To deploy and route requests, please connect at least one agent client on your device.
+                  </p>
+                </div>
+              ) : agents.length === 1 ? (
                 <div className={styles.field}>
-                  <label className="label">CPU Cores</label>
-                  <div className={styles.rangeWrap}>
-                    <input
-                      type="range"
-                      min={1}
-                      max={4}
-                      value={cpu}
-                      onChange={(e) => setCpu(parseInt(e.target.value))}
-                      className={styles.range}
-                      style={{ '--val': `${cpuPct}%` } as React.CSSProperties}
-                    />
-                    <span className={styles.rangeValue}>{cpu} core{cpu > 1 ? 's' : ''}</span>
+                  <label className="label">Target Device / Agent</label>
+                  <div className={styles.singleAgentBadge}>
+                    <span className={styles.agentActiveDot}></span>
+                    <code>{agents[0].agent_id}</code> (Active)
                   </div>
                 </div>
-
+              ) : (
                 <div className={styles.field}>
-                  <label className="label">Memory</label>
-                  <div className={styles.rangeWrap}>
-                    <input
-                      type="range"
-                      min={128}
-                      max={4096}
-                      step={128}
-                      value={memory}
-                      onChange={(e) => setMemory(parseInt(e.target.value))}
-                      className={styles.range}
-                      style={{ '--val': `${memPct}%` } as React.CSSProperties}
-                    />
-                    <span className={styles.rangeValue}>
-                      {memory >= 1024 ? `${(memory / 1024).toFixed(1)} GB` : `${memory} MB`}
-                    </span>
-                  </div>
+                  <label className="label" htmlFor="agent">Target Device / Agent</label>
+                  <select
+                    id="agent"
+                    className="input"
+                    value={selectedAgent}
+                    onChange={(e) => setSelectedAgent(e.target.value)}
+                    required
+                  >
+                    {agents.map((ag) => (
+                      <option key={ag.agent_id} value={ag.agent_id}>
+                        {ag.agent_id}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
+              )}
 
               <button type="submit" className={styles.submitBtn} disabled={loading}>
                 {loading ? (
@@ -181,16 +192,6 @@ export default function DeployPage() {
               <div className={styles.previewRow}>
                 <span className={styles.previewRowLabel}>Local port</span>
                 <span className={styles.previewRowValue}>{localPort}</span>
-              </div>
-              <div className={styles.previewRow}>
-                <span className={styles.previewRowLabel}>CPU</span>
-                <span className={styles.previewRowValue}>{cpu} core{cpu > 1 ? 's' : ''}</span>
-              </div>
-              <div className={styles.previewRow}>
-                <span className={styles.previewRowLabel}>Memory</span>
-                <span className={styles.previewRowValue}>
-                  {memory >= 1024 ? `${(memory / 1024).toFixed(1)} GB` : `${memory} MB`}
-                </span>
               </div>
               <div className={styles.previewRow}>
                 <span className={styles.previewRowLabel}>Status</span>

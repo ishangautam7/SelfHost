@@ -59,7 +59,8 @@ export type TunnelMessage =
     };
 
 export class TunnelManager {
-  private senders: Map<string, WebSocket> = new Map(); // userId -> WebSocket
+  private senders: Map<string, WebSocket> = new Map(); // agentId -> WebSocket
+  private userAgents: Map<string, Set<string>> = new Map(); // userId -> Set<agentId>
   private pendingRequests: Map<string, (res: TunnelMessage & { type: 'HttpResponse' }) => void> = new Map();
   private wss: WebSocketServer;
 
@@ -96,7 +97,11 @@ export class TunnelManager {
       const userId = user.id;
 
       // Register connection
-      this.senders.set(userId, ws);
+      this.senders.set(agentId, ws);
+      if (!this.userAgents.has(userId)) {
+        this.userAgents.set(userId, new Set());
+      }
+      this.userAgents.get(userId)!.add(agentId);
       upsertTunnel(agentId, userId, true).catch(err => console.error('DB error upserting tunnel:', err));
 
       console.log(`Agent ${agentId} connected for user ${user.username}`);
@@ -147,8 +152,15 @@ export class TunnelManager {
 
       ws.on('close', () => {
         clearInterval(pingInterval);
-        if (this.senders.get(userId) === ws) {
-          this.senders.delete(userId);
+        if (this.senders.get(agentId) === ws) {
+          this.senders.delete(agentId);
+        }
+        const agents = this.userAgents.get(userId);
+        if (agents) {
+          agents.delete(agentId);
+          if (agents.size === 0) {
+            this.userAgents.delete(userId);
+          }
         }
         setTunnelDisconnected(agentId).catch(err => console.error('DB error setting tunnel disconnected:', err));
         console.log(`Agent ${agentId} disconnected`);
@@ -161,11 +173,20 @@ export class TunnelManager {
   }
 
   public getSender(userId: string): WebSocket | undefined {
-    return this.senders.get(userId);
+    const agents = this.userAgents.get(userId);
+    if (agents && agents.size > 0) {
+      const firstAgentId = Array.from(agents)[0];
+      return this.senders.get(firstAgentId);
+    }
+    return undefined;
   }
 
-  public async sendHttpRequest(userId: string, request: TunnelMessage & { type: 'HttpRequest' }): Promise<(TunnelMessage & { type: 'HttpResponse' }) | null> {
-    const ws = this.getSender(userId);
+  public getSenderByAgentId(agentId: string): WebSocket | undefined {
+    return this.senders.get(agentId);
+  }
+
+  public async sendHttpRequest(agentIdOrUserId: string, request: TunnelMessage & { type: 'HttpRequest' }): Promise<(TunnelMessage & { type: 'HttpResponse' }) | null> {
+    const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       return null;
     }
@@ -191,8 +212,8 @@ export class TunnelManager {
     });
   }
 
-  public sendCommand(userId: string, app_id: string, app_name: string, local_port: number, command: AgentCommandType) {
-    const ws = this.getSender(userId);
+  public sendCommand(agentIdOrUserId: string, app_id: string, app_name: string, local_port: number, command: AgentCommandType) {
+    const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
         type: 'AgentCommand',

@@ -34,6 +34,7 @@ async function runMigrations() {
       CREATE TABLE IF NOT EXISTS apps (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id),
+        agent_id TEXT,
         name TEXT NOT NULL,
         subdomain TEXT UNIQUE NOT NULL,
         local_port INTEGER NOT NULL,
@@ -42,6 +43,10 @@ async function runMigrations() {
         resource_memory INTEGER DEFAULT 512,
         created_at TIMESTAMP DEFAULT NOW()
       );
+    `);
+        // Ensure agent_id column exists on existing databases
+        await client.query(`
+      ALTER TABLE apps ADD COLUMN IF NOT EXISTS agent_id TEXT;
     `);
         await client.query(`
       CREATE TABLE IF NOT EXISTS tunnels (

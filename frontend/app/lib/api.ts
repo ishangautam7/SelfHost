@@ -10,6 +10,7 @@ export interface UserPublic {
 export interface App {
   id: string;
   user_id: string;
+  agent_id?: string;
   name: string;
   subdomain: string;
   local_port: number;
@@ -23,6 +24,7 @@ export interface CreateAppRequest {
   name: string;
   subdomain: string;
   local_port: number;
+  agent_id?: string;
   resource_cpu?: number;
   resource_memory?: number;
 }
@@ -146,4 +148,13 @@ export async function getAgentConfig(): Promise<{
   use_tls: boolean;
 }> {
   return request('/api/agent/config');
+}
+
+export interface ActiveAgent {
+  agent_id: string;
+  last_heartbeat: string;
+}
+
+export async function listActiveAgents(): Promise<ActiveAgent[]> {
+  return request<ActiveAgent[]>('/api/agent/active');
 }

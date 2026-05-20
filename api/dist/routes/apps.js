@@ -4,6 +4,7 @@ const express_1 = require("express");
 const uuid_1 = require("uuid");
 const db_1 = require("../db");
 const auth_1 = require("../middleware/auth");
+const tunnel_1 = require("../tunnel");
 const router = (0, express_1.Router)();
 router.use(auth_1.authenticate);
 router.get('/', async (req, res) => {
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const userId = req.user.sub;
-        const { name, subdomain, local_port, resource_cpu, resource_memory } = req.body;
+        const { name, subdomain, local_port, agent_id, resource_cpu, resource_memory } = req.body;
         if (!name || !subdomain || !local_port) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -35,10 +36,18 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         const username = userResult.rows[0].username;
-        // Sanitize app name subdomain and build nested format: app.username
+        // Resolve target agent ID
+        let targetAgentId = agent_id;
+        if (!targetAgentId) {
+            const agentResult = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 AND is_connected = 1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
+            if (agentResult.rows.length > 0) {
+                targetAgentId = agentResult.rows[0].agent_id;
+            }
+        }
+        // Sanitize app name subdomain and build flat format: app-username (no dots, so wildcard SSL works)
         const cleanSub = subdomain.split('.')[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const fullSubdomain = `${cleanSub}.${username}`;
-        await pool.query('INSERT INTO apps (id, user_id, name, subdomain, local_port, resource_cpu, resource_memory) VALUES ($1, $2, $3, $4, $5, $6, $7)', [id, userId, name, fullSubdomain, local_port, cpu, memory]);
+        const fullSubdomain = `${cleanSub}-${username}`;
+        await pool.query('INSERT INTO apps (id, user_id, agent_id, name, subdomain, local_port, resource_cpu, resource_memory) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', [id, userId, targetAgentId, name, fullSubdomain, local_port, cpu, memory]);
         const result = await pool.query('SELECT * FROM apps WHERE id = $1', [id]);
         res.json(result.rows[0]);
     }
@@ -126,6 +135,17 @@ router.post('/:id/start', async (req, res) => {
             return res.status(404).json({ error: 'App not found' });
         }
         await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['starting', appId]);
+        // Dispatch command to the target agent
+        let targetAgentId = app.agent_id;
+        if (!targetAgentId) {
+            const agentResult = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 AND is_connected = 1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
+            if (agentResult.rows.length > 0) {
+                targetAgentId = agentResult.rows[0].agent_id;
+            }
+        }
+        if (targetAgentId) {
+            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.local_port, 'start');
+        }
         res.json({ message: 'App start requested' });
     }
     catch (err) {
@@ -144,6 +164,17 @@ router.post('/:id/stop', async (req, res) => {
             return res.status(404).json({ error: 'App not found' });
         }
         await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['stopping', appId]);
+        // Dispatch command to the target agent
+        let targetAgentId = app.agent_id;
+        if (!targetAgentId) {
+            const agentResult = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 AND is_connected = 1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
+            if (agentResult.rows.length > 0) {
+                targetAgentId = agentResult.rows[0].agent_id;
+            }
+        }
+        if (targetAgentId) {
+            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.local_port, 'stop');
+        }
         res.json({ message: 'App stop requested' });
     }
     catch (err) {

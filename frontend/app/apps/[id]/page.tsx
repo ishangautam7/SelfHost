@@ -17,8 +17,6 @@ export default function AppDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editPort, setEditPort] = useState(0);
-  const [editCpu, setEditCpu] = useState(1);
-  const [editMemory, setEditMemory] = useState(512);
 
   useEffect(() => {
     if (user && appId) {
@@ -34,8 +32,6 @@ export default function AppDetailPage() {
       setApp(data);
       if (!editing) {
         setEditPort(data.local_port);
-        setEditCpu(data.resource_cpu);
-        setEditMemory(data.resource_memory);
       }
     } catch {
       router.push('/dashboard');
@@ -61,8 +57,6 @@ export default function AppDetailPage() {
     try {
       await updateApp(appId, {
         local_port: editPort,
-        resource_cpu: editCpu,
-        resource_memory: editMemory,
       });
       setEditing(false);
       loadApp();
@@ -140,22 +134,6 @@ export default function AppDetailPage() {
                 <input className="input" type="number" value={editPort} onChange={(e) => setEditPort(parseInt(e.target.value) || 0)} />
               ) : (
                 <span className={styles.configValue}>{app.local_port}</span>
-              )}
-            </div>
-            <div className={styles.configItem}>
-              <span className={styles.configLabel}>CPU Cores</span>
-              {editing ? (
-                <input className="input" type="number" min={1} max={4} value={editCpu} onChange={(e) => setEditCpu(parseInt(e.target.value) || 1)} />
-              ) : (
-                <span className={styles.configValue}>{app.resource_cpu}</span>
-              )}
-            </div>
-            <div className={styles.configItem}>
-              <span className={styles.configLabel}>Memory</span>
-              {editing ? (
-                <input className="input" type="number" min={128} step={128} value={editMemory} onChange={(e) => setEditMemory(parseInt(e.target.value) || 512)} />
-              ) : (
-                <span className={styles.configValue}>{app.resource_memory} MB</span>
               )}
             </div>
           </div>

@@ -31,6 +31,7 @@ async function proxyMiddleware(req, res, next) {
     // If this is an API request or dashboard request, let it pass through to regular routes
     // But actually, we only intercept if we detect a valid subdomain for our app.
     const subdomain = extractSubdomain(host, BASE_DOMAIN);
+    console.log(`[Proxy] Detected request for host: ${host}, extracted subdomain: ${subdomain}, BASE_DOMAIN: ${BASE_DOMAIN}`);
     if (!subdomain) {
         // If not a subdomain matching our base domain, pass to normal API routes
         return next();
@@ -41,7 +42,8 @@ async function proxyMiddleware(req, res, next) {
         return res.status(404).send(`No app found for subdomain: ${subdomain}.${BASE_DOMAIN}`);
     }
     // Found the app. Find the connected tunnel.
-    const ws = tunnel_1.tunnelManager.getSender(app.user_id);
+    const targetAgentId = app.agent_id || app.user_id;
+    const ws = tunnel_1.tunnelManager.getSenderByAgentId(targetAgentId) || tunnel_1.tunnelManager.getSender(targetAgentId);
     if (!ws) {
         return res.status(503).send('The host for this app is currently offline. Please try again later.');
     }
@@ -52,7 +54,7 @@ async function proxyMiddleware(req, res, next) {
     req.on('end', async () => {
         const bodyBytes = Buffer.concat(bodyBuffer);
         const bodyArray = bodyBytes.length > 0 ? Array.from(bodyBytes) : undefined;
-        const responseMsg = await tunnel_1.tunnelManager.sendHttpRequest(app.user_id, {
+        const responseMsg = await tunnel_1.tunnelManager.sendHttpRequest(targetAgentId, {
             type: 'HttpRequest',
             payload: {
                 request_id: requestId,

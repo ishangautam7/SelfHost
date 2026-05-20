@@ -48,7 +48,8 @@ export async function proxyMiddleware(req: Request, res: Response, next: NextFun
   }
 
   // Found the app. Find the connected tunnel.
-  const ws = tunnelManager.getSender(app.user_id);
+  const targetAgentId = app.agent_id || app.user_id;
+  const ws = tunnelManager.getSenderByAgentId(targetAgentId) || tunnelManager.getSender(targetAgentId);
   if (!ws) {
     return res.status(503).send('The host for this app is currently offline. Please try again later.');
   }
@@ -63,7 +64,7 @@ export async function proxyMiddleware(req: Request, res: Response, next: NextFun
     const bodyBytes = Buffer.concat(bodyBuffer);
     const bodyArray = bodyBytes.length > 0 ? Array.from(bodyBytes) : undefined;
 
-    const responseMsg = await tunnelManager.sendHttpRequest(app.user_id, {
+    const responseMsg = await tunnelManager.sendHttpRequest(targetAgentId, {
       type: 'HttpRequest',
       payload: {
         request_id: requestId,

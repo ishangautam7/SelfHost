@@ -116,6 +116,10 @@
   .heroLeft {
     align-items: center;
   }
+
+  .heroActions {
+    justify-content: center;
+  }
 }
 
 .badgeHighlight {
