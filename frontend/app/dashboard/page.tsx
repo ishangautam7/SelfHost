@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { App, listApps, startApp, stopApp, deleteApp, API_BASE, listActiveAgents, ActiveAgent } from '../lib/api';
+import { App, listApps, startApp, stopApp, deleteApp, API_BASE, listActiveAgents, ActiveAgent, getLatestAgent } from '../lib/api';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 
@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const [apps, setApps] = useState<App[]>([]);
   const [agents, setAgents] = useState<ActiveAgent[]>([]);
+  const [latestAgentId, setLatestAgentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -43,6 +44,17 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const loadLatestAgent = useCallback(async () => {
+    try {
+      const res = await getLatestAgent();
+      if (res.agent_id) {
+        setLatestAgentId(res.agent_id);
+      }
+    } catch {
+      /* silent refresh */
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login');
   }, [user, authLoading, router]);
@@ -51,13 +63,14 @@ export default function DashboardPage() {
     if (user) {
       loadApps();
       loadAgents();
+      loadLatestAgent();
       const interval = setInterval(() => {
         loadApps();
         loadAgents();
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [user, loadApps, loadAgents]);
+  }, [user, loadApps, loadAgents, loadLatestAgent]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -116,7 +129,7 @@ export default function DashboardPage() {
 
   const copyCliCommand = () => {
     if (user?.api_key) {
-      const activeId = agents.length > 0 ? agents[0].agent_id : 'my-device';
+      const activeId = agents.length > 0 ? agents[0].agent_id : (latestAgentId || '<device-id>');
       const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key} --agent-id ${activeId}`;
       navigator.clipboard.writeText(cmd);
       setCopiedCommand(true);
@@ -210,7 +223,7 @@ export default function DashboardPage() {
             <div className={styles.cliTitle}>Direct Agent Connection Command</div>
             <div className={styles.commandBlock}>
               <code className={styles.commandText}>
-                agent connect --server {serverUrl} --api-key {user.api_key} --agent-id {agents.length > 0 ? agents[0].agent_id : 'my-device'}
+                agent connect --server {serverUrl} --api-key {user.api_key} --agent-id {agents.length > 0 ? agents[0].agent_id : (latestAgentId || '<device-id>')}
               </code>
               <button className="btn btn-secondary btn-sm" onClick={copyCliCommand}>
                 {copiedCommand ? (

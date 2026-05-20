@@ -41,4 +41,21 @@ router.get('/active', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+router.get('/latest', async (req, res) => {
+    try {
+        const userId = req.user.sub;
+        const pool = (0, db_1.getPool)();
+        const result = await pool.query('SELECT agent_id FROM tunnels WHERE user_id = $1 ORDER BY last_heartbeat DESC LIMIT 1', [userId]);
+        if (result.rows.length > 0) {
+            res.json({ agent_id: result.rows[0].agent_id });
+        }
+        else {
+            res.json({ agent_id: null });
+        }
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 exports.default = router;

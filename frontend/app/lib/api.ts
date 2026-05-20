@@ -154,3 +154,7 @@ export interface ActiveAgent {
 export async function listActiveAgents(): Promise<ActiveAgent[]> {
   return request<ActiveAgent[]>('/api/agent/active');
 }
+
+export async function getLatestAgent(): Promise<{ agent_id: string | null }> {
+  return request<{ agent_id: string | null }>('/api/agent/latest');
+}
