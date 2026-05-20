@@ -15,15 +15,13 @@ struct Cli {
 enum Commands {
     /// Connect to the SelfHost server and start hosting
     Connect {
-        /// Server URL (e.g., ws://your-server.com:8080/ws/tunnel)
         #[arg(short, long)]
         server: String,
 
-        /// Your API key (from the dashboard)
         #[arg(short, long)]
         api_key: String,
 
-        /// Agent ID (auto-generated if not provided)
+        /// Agent ID generated automatically if not present
         #[arg(long)]
         agent_id: Option<String>,
     },
@@ -39,11 +37,20 @@ struct LocalAgentConfig {
 }
 
 fn get_or_create_agent_id(cli_agent_id: Option<String>) -> String {
+    let config_path = Path::new("agent_config.json");
+
     if let Some(id) = cli_agent_id {
+        let config = LocalAgentConfig {
+            agent_id: id.clone(),
+        };
+        if let Ok(content) = serde_json::to_string_pretty(&config) {
+            if let Ok(_) = fs::write(config_path, content) {
+                log::info!("Saved custom agent ID from CLI arg to agent_config.json: {}", id);
+            }
+        }
         return id;
     }
 
-    let config_path = Path::new("agent_config.json");
     if config_path.exists() {
         if let Ok(content) = fs::read_to_string(config_path) {
             if let Ok(config) = serde_json::from_str::<LocalAgentConfig>(&content) {

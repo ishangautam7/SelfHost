@@ -149,7 +149,7 @@ export default function LandingPage() {
 
   const handleCopyConnect = () => {
     const binary = installMethod === 'cargo' ? 'agent' : './target/release/agent';
-    const text = `${binary} connect --server ${serverUrl} --api-key ${builderKey} --agent-id <device-id>`;
+    const text = `${binary} connect --server ${serverUrl} --api-key ${builderKey} --agent-id my-device`;
     navigator.clipboard.writeText(text);
     setCopiedConnect(true);
     setTimeout(() => setCopiedConnect(false), 2000);
@@ -446,7 +446,7 @@ export default function LandingPage() {
                       {installMethod === 'cargo' ? 'agent' : './target/release/agent'} connect \<br />
                       &nbsp;&nbsp;--server {serverUrl} \<br />
                       &nbsp;&nbsp;--api-key {builderKey || '<your-api-key>'} \<br />
-                      &nbsp;&nbsp;--agent-id &lt;device-id&gt;
+                      &nbsp;&nbsp;--agent-id my-device
                     </span>
                   </div>
                   <button

@@ -146,13 +146,14 @@ export default function AppDetailPage() {
           <pre className={styles.codeBlock}>
             {`cargo run --bin agent -- connect \\
   --server wss://api.ishangautam7.com.np/ws/tunnel \\
-  --api-key ${user.api_key}`}
+  --api-key ${user.api_key}${app.agent_id ? ` \\
+  --agent-id ${app.agent_id}` : ''}`}
           </pre>
           <button
             className="btn btn-secondary btn-sm"
             style={{ marginTop: '0.75rem' }}
             onClick={() => navigator.clipboard.writeText(
-              `cargo run --bin agent -- connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}`
+              `cargo run --bin agent -- connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}${app.agent_id ? ` --agent-id ${app.agent_id}` : ''}`
             )}
           >
             Copy Command
