@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
   const copyCliCommand = () => {
     if (user?.api_key) {
-      const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key}`;
+      const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key} --agent-id <device-id>`;
       navigator.clipboard.writeText(cmd);
       setCopiedCommand(true);
       showToast('CLI Command copied!');
@@ -195,7 +195,7 @@ export default function DashboardPage() {
             <div className={styles.cliTitle}>Direct Agent Connection Command</div>
             <div className={styles.commandBlock}>
               <code className={styles.commandText}>
-                agent connect --server {serverUrl} --api-key {user.api_key}
+                agent connect --server {serverUrl} --api-key {user.api_key} --agent-id &lt;device-id&gt;
               </code>
               <button className="btn btn-secondary btn-sm" onClick={copyCliCommand}>
                 {copiedCommand ? (

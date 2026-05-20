@@ -96,9 +96,9 @@ export default function LandingPage() {
 
         // Command 2: Type connect command
         setPromptPath('~');
-        const cmd2 = `agent connect --server ${serverUrl} --api-key ${user?.api_key || 'sh_usr_a1b2c3d4'}`;
+        const cmd2 = `agent connect --server ${serverUrl} --api-key ${user?.api_key || 'sh_usr_a1b2c3d4'} --agent-id my-device`;
         // Limit display string in typing loop to prevent infinite wrapping
-        const displayCmd = `agent connect --server .../ws/tunnel --api-key sh_usr_7x9a8b`;
+        const displayCmd = `agent connect --server .../ws/tunnel --api-key sh_usr_7x9a8b --agent-id my-device`;
         for (let i = 1; i <= displayCmd.length; i++) {
           setCurrentPrompt(displayCmd.substring(0, i));
           await sleep(35);
@@ -113,6 +113,7 @@ export default function LandingPage() {
         setTerminalLines(prev => [
           ...prev,
           '[INFO] SelfHost Agent starting...',
+          '[INFO] Agent ID: my-device',
           '[INFO] Connecting to server...',
           '[INFO] WebSocket handshakes complete!',
           '[INFO] Connection established successfully!',
@@ -148,7 +149,7 @@ export default function LandingPage() {
 
   const handleCopyConnect = () => {
     const binary = installMethod === 'cargo' ? 'agent' : './target/release/agent';
-    const text = `${binary} connect --server ${serverUrl} --api-key ${builderKey}`;
+    const text = `${binary} connect --server ${serverUrl} --api-key ${builderKey} --agent-id <device-id>`;
     navigator.clipboard.writeText(text);
     setCopiedConnect(true);
     setTimeout(() => setCopiedConnect(false), 2000);
@@ -444,7 +445,8 @@ export default function LandingPage() {
                     <span>
                       {installMethod === 'cargo' ? 'agent' : './target/release/agent'} connect \<br />
                       &nbsp;&nbsp;--server {serverUrl} \<br />
-                      &nbsp;&nbsp;--api-key {builderKey || '<your-api-key>'}
+                      &nbsp;&nbsp;--api-key {builderKey || '<your-api-key>'} \<br />
+                      &nbsp;&nbsp;--agent-id &lt;device-id&gt;
                     </span>
                   </div>
                   <button
@@ -522,9 +524,9 @@ export default function LandingPage() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Resource Monitoring</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Device & Agent Portal</h3>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Keep tabs on CPU cores, memory limits, and connection health directly from your developer dashboard. Stop, start, or delete tunnels on demand.
+              Keep tabs on your active devices, agent connections, and tunnel health directly from your developer dashboard. Stop, start, or delete tunnels on demand.
             </p>
           </div>
         </div>
