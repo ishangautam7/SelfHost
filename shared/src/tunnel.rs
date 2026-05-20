@@ -51,6 +51,7 @@ pub enum TunnelMessage {
         command: AgentCommandType,
         app_id: String,
         app_name: String,
+        subdomain: String,
         local_port: u16,
     },
 
