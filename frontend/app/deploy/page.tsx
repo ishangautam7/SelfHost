@@ -141,6 +141,8 @@ export default function DeployPage() {
                   </div>
                   <p className={styles.warningText}>
                     To deploy and route requests, please connect at least one agent client on your device.
+                    <br/><br/>
+                    <strong>How to connect:</strong> Run <code>cargo run --release --bin agent -- connect ...</code> using the command from your dashboard.
                   </p>
                 </div>
               ) : agents.length === 1 ? (

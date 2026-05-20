@@ -131,7 +131,7 @@ export default function DashboardPage() {
     if (user?.api_key) {
       const activeId = agents.length > 0 ? agents[0].agent_id : latestAgentId;
       const agentIdArg = activeId ? ` --agent-id ${activeId}` : '';
-      const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key}${agentIdArg}`;
+      const cmd = `cargo run --bin agent -- connect --server ${serverUrl} --api-key ${user.api_key}${agentIdArg}`;
       navigator.clipboard.writeText(cmd);
       setCopiedCommand(true);
       showToast('CLI Command copied!');
@@ -221,10 +221,13 @@ export default function DashboardPage() {
           </div>
 
           <div className={styles.cliContainer}>
-            <div className={styles.cliTitle}>Direct Agent Connection Command</div>
+            <div className={styles.cliTitle}>How to connect your device</div>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              Run this command on the machine hosting your apps from the SelfHost directory (requires <a href="https://rustup.rs/" target="_blank" rel="noreferrer" style={{color: 'var(--primary)', textDecoration: 'underline'}}>Rust</a> installed). If you downloaded the pre-compiled binary, replace <code>cargo run --bin agent --</code> with <code>./agent</code>.
+            </p>
             <div className={styles.commandBlock}>
               <code className={styles.commandText}>
-                agent connect --server {serverUrl} --api-key {user.api_key}
+                cargo run --bin agent -- connect --server {serverUrl} --api-key {user.api_key}
                 {agents.length > 0 ? ` --agent-id ${agents[0].agent_id}` : (latestAgentId ? ` --agent-id ${latestAgentId}` : '')}
               </code>
               <button className="btn btn-secondary btn-sm" onClick={copyCliCommand}>
