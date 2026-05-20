@@ -35,25 +35,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Temporary debug endpoint
-app.get('/api/debug/subdomain/:sub', async (req, res) => {
-  const { getPool } = await import('./db');
-  const pool = getPool();
-  try {
-    const result = await pool.query('SELECT id, name, subdomain, status, agent_id FROM apps WHERE subdomain = $1', [req.params.sub]);
-    const allApps = await pool.query('SELECT id, name, subdomain FROM apps');
-    res.json({
-      query_subdomain: req.params.sub,
-      found: result.rows,
-      all_apps: allApps.rows,
-      base_domain: process.env.BASE_DOMAIN || 'selfhost.ishangautam7.com.np',
-      host_header: req.headers.host
-    });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 async function startServer() {
   try {
     // Run DB migrations before starting
