@@ -136,7 +136,7 @@ router.post('/:id/start', async (req, res) => {
             }
         }
         if (targetAgentId) {
-            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.local_port, 'start');
+            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
         }
         res.json({ message: 'App start requested' });
     }
@@ -165,7 +165,7 @@ router.post('/:id/stop', async (req, res) => {
             }
         }
         if (targetAgentId) {
-            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.local_port, 'stop');
+            tunnel_1.tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
         }
         res.json({ message: 'App stop requested' });
     }

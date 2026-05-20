@@ -212,12 +212,12 @@ export class TunnelManager {
     });
   }
 
-  public sendCommand(agentIdOrUserId: string, app_id: string, app_name: string, local_port: number, command: AgentCommandType) {
+  public sendCommand(agentIdOrUserId: string, app_id: string, app_name: string, subdomain: string, local_port: number, command: AgentCommandType) {
     const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
         type: 'AgentCommand',
-        payload: { command, app_id, app_name, local_port }
+        payload: { command, app_id, app_name, subdomain, local_port }
       }));
     }
   }

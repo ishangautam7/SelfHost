@@ -138,12 +138,12 @@ class TunnelManager {
             });
         });
     }
-    sendCommand(agentIdOrUserId, app_id, app_name, local_port, command) {
+    sendCommand(agentIdOrUserId, app_id, app_name, subdomain, local_port, command) {
         const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
         if (ws && ws.readyState === ws_1.WebSocket.OPEN) {
             ws.send(JSON.stringify({
                 type: 'AgentCommand',
-                payload: { command, app_id, app_name, local_port }
+                payload: { command, app_id, app_name, subdomain, local_port }
             }));
         }
     }
