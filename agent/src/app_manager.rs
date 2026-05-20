@@ -15,6 +15,7 @@ pub struct AppManager {
 #[allow(dead_code)]
 struct AppEntry {
     name: String,
+    subdomain: String,
     local_port: u16,
 }
 
@@ -26,25 +27,26 @@ impl AppManager {
         }
     }
 
-    pub fn register_app(&self, app_id: &str, name: &str, local_port: u16) {
+    pub fn register_app(&self, app_id: &str, name: &str, subdomain: &str, local_port: u16) {
         let mut apps = self.apps.write().unwrap();
         apps.insert(
             app_id.to_string(),
             AppEntry {
                 name: name.to_string(),
+                subdomain: subdomain.to_string(),
                 local_port,
             },
         );
 
-        // Use the app name (lowercase, sanitized) as subdomain key
-        let subdomain = name.to_lowercase().replace(' ', "-");
+        // Use the actual subdomain from the database for routing
         let mut smap = self.subdomain_map.write().unwrap();
-        smap.insert(subdomain, local_port);
+        smap.insert(subdomain.to_string(), local_port);
 
         log::info!(
-            " Registered app: {} (id: {}) on port {}",
+            "Registered app: {} (id: {}, subdomain: {}) on port {}",
             name,
             app_id,
+            subdomain,
             local_port
         );
     }
@@ -52,9 +54,8 @@ impl AppManager {
     pub fn unregister_app(&self, app_id: &str) {
         let mut apps = self.apps.write().unwrap();
         if let Some(entry) = apps.remove(app_id) {
-            let subdomain = entry.name.to_lowercase().replace(' ', "-");
             let mut smap = self.subdomain_map.write().unwrap();
-            smap.remove(&subdomain);
+            smap.remove(&entry.subdomain);
             log::info!("Unregistered app: {} (id: {})", entry.name, app_id);
         }
     }

@@ -115,18 +115,20 @@ pub async fn connect_and_run(
                         command,
                         app_id,
                         app_name,
+                        subdomain,
                         local_port,
                     }) => {
                         log::info!(
-                            "Agent command: {:?} for app {} (port {})",
+                            "Agent command: {:?} for app {} (subdomain: {}, port {})",
                             command,
                             app_name,
+                            subdomain,
                             local_port
                         );
 
                         let (success, message) = match command {
                             shared::tunnel::AgentCommandType::Start => {
-                                app_mgr.register_app(&app_id, &app_name, local_port);
+                                app_mgr.register_app(&app_id, &app_name, &subdomain, local_port);
                                 (
                                     true,
                                     format!("App {} registered on port {}", app_name, local_port),
@@ -138,7 +140,7 @@ pub async fn connect_and_run(
                             }
                             shared::tunnel::AgentCommandType::Restart => {
                                 app_mgr.unregister_app(&app_id);
-                                app_mgr.register_app(&app_id, &app_name, local_port);
+                                app_mgr.register_app(&app_id, &app_name, &subdomain, local_port);
                                 (true, format!("App {} restarted", app_name))
                             }
                         };
