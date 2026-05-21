@@ -137,12 +137,20 @@ pub async fn connect_and_run(
                             }
                             shared::tunnel::AgentCommandType::Stop => {
                                 app_mgr.unregister_app(&app_id);
-                                (true, format!("App {} stopped", app_name), shared::tunnel::AgentCommandType::Stop)
+                                (
+                                    true,
+                                    format!("App {} stopped", app_name),
+                                    shared::tunnel::AgentCommandType::Stop,
+                                )
                             }
                             shared::tunnel::AgentCommandType::Restart => {
                                 app_mgr.unregister_app(&app_id);
                                 app_mgr.register_app(&app_id, &app_name, &subdomain, local_port);
-                                (true, format!("App {} restarted", app_name), shared::tunnel::AgentCommandType::Restart)
+                                (
+                                    true,
+                                    format!("App {} restarted", app_name),
+                                    shared::tunnel::AgentCommandType::Restart,
+                                )
                             }
                         };
 
@@ -199,7 +207,7 @@ async fn forward_to_local(
     body: Option<&[u8]>,
 ) -> TunnelMessage {
     let client = reqwest::Client::new();
-    let url = format!("http://127.0.0.1:{}{}", port, path);
+    let url = format!("http://localhost:{}{}", port, path);
 
     let mut req_builder = match method {
         "GET" => client.get(&url),
