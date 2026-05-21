@@ -144,16 +144,17 @@ export default function AppDetailPage() {
           <h3>Connect Agent</h3>
           <p>Run this on the device where your app is running:</p>
           <pre className={styles.codeBlock}>
-            {`cargo run --bin agent -- connect \\
+            {`agent connect \\
   --server wss://api.ishangautam7.com.np/ws/tunnel \\
-  --api-key ${user.api_key}${app.agent_id ? ` \\
-  --agent-id ${app.agent_id}` : ''}`}
+  --api-key ${user?.api_key || 'YOUR_API_KEY'}${
+    app?.agent_id ? ` \\\n  --agent-id ${app.agent_id}` : ''
+  }`}
           </pre>
           <button
             className="btn btn-secondary btn-sm"
             style={{ marginTop: '0.75rem' }}
             onClick={() => navigator.clipboard.writeText(
-              `cargo run --bin agent -- connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}${app.agent_id ? ` --agent-id ${app.agent_id}` : ''}`
+              `agent connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}${app.agent_id ? ` --agent-id ${app.agent_id}` : ''}`
             )}
           >
             Copy Command
