@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage, Server } from 'http';
 import { URL } from 'url';
-import { getUserByApiKey, upsertTunnel, setTunnelDisconnected, updateAppStatus } from './db';
+import { getUserByApiKey, upsertTunnel, setTunnelDisconnected, updateAppStatus, getAppsForAgent, getPool } from './db';
 
 export type AgentCommandType = 'start' | 'stop' | 'restart';
 
@@ -42,7 +42,7 @@ export type TunnelMessage =
     }
   | {
       type: 'AgentCommandResult';
-      payload: { app_id: string; success: boolean; message: string };
+      payload: { app_id: string; command: string; success: boolean; message: string };
     }
   | {
       type: 'StatusReport';
@@ -114,6 +114,25 @@ export class TunnelManager {
         })
       );
 
+      // Sync active apps to the newly connected agent
+      try {
+        const apps = await getAppsForAgent(agentId);
+        for (const app of apps) {
+          ws.send(JSON.stringify({
+            type: 'AgentCommand',
+            payload: {
+              command: 'start',
+              app_id: app.id,
+              app_name: app.name,
+              subdomain: app.subdomain,
+              local_port: app.local_port
+            }
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to sync apps to agent:', err);
+      }
+
       // Heartbeat
       const pingInterval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -136,8 +155,28 @@ export class TunnelManager {
               }
               break;
             case 'AgentCommandResult':
-              const status = msg.payload.success ? 'running' : 'error';
-              updateAppStatus(msg.payload.app_id, status).catch(err => console.error('DB error updating app status:', err));
+              if (msg.payload.success) {
+                // If agent sends command type, use it directly
+                if (msg.payload.command) {
+                  const resultStatus = msg.payload.command === 'stop' ? 'stopped' : 'running';
+                  updateAppStatus(msg.payload.app_id, resultStatus).catch(err => console.error('DB error updating app status:', err));
+                } else {
+                  // Fallback: check current DB status to infer intent
+                  const pool = getPool();
+                  pool.query('SELECT status FROM apps WHERE id = $1', [msg.payload.app_id])
+                    .then(appResult => {
+                      const currentStatus = appResult.rows[0]?.status;
+                      const resultStatus = (currentStatus === 'stopping') ? 'stopped' : 'running';
+                      updateAppStatus(msg.payload.app_id, resultStatus).catch(err => console.error('DB error updating app status:', err));
+                    })
+                    .catch(dbErr => {
+                      console.error('DB error looking up app status for fallback:', dbErr);
+                      updateAppStatus(msg.payload.app_id, 'running').catch(err => console.error('DB error:', err));
+                    });
+                }
+              } else {
+                updateAppStatus(msg.payload.app_id, 'error').catch(err => console.error('DB error updating app status:', err));
+              }
               break;
             case 'StatusReport':
               for (const app of msg.payload.apps) {

@@ -58,6 +58,7 @@ pub enum TunnelMessage {
     /// Agent reports command result
     AgentCommandResult {
         app_id: String,
+        command: AgentCommandType,
         success: bool,
         message: String,
     },

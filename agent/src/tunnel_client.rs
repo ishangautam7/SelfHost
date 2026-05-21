@@ -126,27 +126,29 @@ pub async fn connect_and_run(
                             local_port
                         );
 
-                        let (success, message) = match command {
+                        let (success, message, cmd_type) = match command {
                             shared::tunnel::AgentCommandType::Start => {
                                 app_mgr.register_app(&app_id, &app_name, &subdomain, local_port);
                                 (
                                     true,
                                     format!("App {} registered on port {}", app_name, local_port),
+                                    shared::tunnel::AgentCommandType::Start,
                                 )
                             }
                             shared::tunnel::AgentCommandType::Stop => {
                                 app_mgr.unregister_app(&app_id);
-                                (true, format!("App {} stopped", app_name))
+                                (true, format!("App {} stopped", app_name), shared::tunnel::AgentCommandType::Stop)
                             }
                             shared::tunnel::AgentCommandType::Restart => {
                                 app_mgr.unregister_app(&app_id);
                                 app_mgr.register_app(&app_id, &app_name, &subdomain, local_port);
-                                (true, format!("App {} restarted", app_name))
+                                (true, format!("App {} restarted", app_name), shared::tunnel::AgentCommandType::Restart)
                             }
                         };
 
                         let result = TunnelMessage::AgentCommandResult {
                             app_id,
+                            command: cmd_type,
                             success,
                             message,
                         };

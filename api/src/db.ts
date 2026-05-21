@@ -89,6 +89,14 @@ export async function getAppBySubdomain(subdomain: string): Promise<any> {
   return result.rows[0];
 }
 
+export async function getAppsForAgent(agentId: string): Promise<any[]> {
+  const result = await pool.query(
+    "SELECT * FROM apps WHERE agent_id = $1 AND status IN ('running', 'starting')",
+    [agentId]
+  );
+  return result.rows;
+}
+
 // Helper to get a client for transactions
 export function getPool() {
   return pool;

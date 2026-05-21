@@ -637,21 +637,10 @@
   font-size: 13px;
   color: #e2e8f0;
   white-space: nowrap;
-  overflow-x: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex-grow: 1;
-  padding-bottom: 12px;
-}
-
-.commandText::-webkit-scrollbar {
-  height: 4px;
-}
-.commandText::-webkit-scrollbar:hover {
-  height: 4px;
-}
-
-.commandText::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--r-full);
+  min-width: 0;
 }
 
 .copyBtn {
