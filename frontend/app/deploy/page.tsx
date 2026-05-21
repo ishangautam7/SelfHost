@@ -63,7 +63,7 @@ export default function DeployPage() {
       <nav className={styles.navbar}>
         <div className={styles.navInner}>
           <Link href="/dashboard" className={styles.backLink}>
-            ← Dashboard
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 6}}><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Dashboard
           </Link>
           <Link href="/dashboard" className={styles.navLogo}>
             <div className={styles.logoMark}>
@@ -142,13 +142,15 @@ export default function DeployPage() {
               {agents.length === 0 ? (
                 <div className={styles.warningBox}>
                   <div className={styles.warningHeader}>
-                    <span className={styles.warningIcon}>⚠️</span>
+                    <span className={styles.warningIcon}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </span>
                     <strong>No active agents connected</strong>
                   </div>
                   <p className={styles.warningText}>
                     To deploy and route requests, please connect at least one agent client on your device.
                     <br/><br/>
-                    <strong>How to connect:</strong> Run <code>cargo run --release --bin agent -- connect ...</code> using the command from your dashboard.
+                    <strong>How to connect:</strong> Run <code>agent connect ...</code> using the command from your dashboard.
                   </p>
                 </div>
               ) : agents.length === 1 ? (

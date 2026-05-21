@@ -131,7 +131,7 @@ export default function DashboardPage() {
     if (user?.api_key) {
       const activeId = agents.length > 0 ? agents[0].agent_id : latestAgentId;
       const agentIdArg = activeId ? ` --agent-id ${activeId}` : '';
-      const cmd = `cargo run --bin agent -- connect --server ${serverUrl} --api-key ${user.api_key}${agentIdArg}`;
+      const cmd = `agent connect --server ${serverUrl} --api-key ${user.api_key}${agentIdArg}`;
       navigator.clipboard.writeText(cmd);
       setCopiedCommand(true);
       showToast('CLI Command copied!');
@@ -229,11 +229,11 @@ export default function DashboardPage() {
           <div className={styles.cliContainer}>
             <div className={styles.cliTitle}>How to connect your device</div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-              Run this command on the machine hosting your apps from the SelfHost directory (requires <a href="https://rustup.rs/" target="_blank" rel="noreferrer" style={{color: 'var(--primary)', textDecoration: 'underline'}}>Rust</a> installed). If you downloaded the pre-compiled binary, replace <code>cargo run --bin agent --</code> with <code>./agent</code>.
+              Run this command on the machine hosting your apps. (Requires the agent to be installed via <code>cargo install --git https://github.com/ishangautam7/SelfHost --bin agent</code>). If you downloaded the pre-compiled binary, use <code>./agent</code> instead.
             </p>
             <div className={styles.commandBlock}>
               <code className={styles.commandText}>
-                cargo run --bin agent -- connect --server {serverUrl} --api-key {user.api_key}
+                agent connect --server {serverUrl} --api-key {user.api_key}
                 {agents.length > 0 ? ` --agent-id ${agents[0].agent_id}` : (latestAgentId ? ` --agent-id ${latestAgentId}` : '')}
               </code>
               <button className="btn btn-secondary btn-sm" onClick={copyCliCommand}>
@@ -303,7 +303,7 @@ export default function DashboardPage() {
                     rel="noreferrer"
                     className={styles.domainLink}
                   >
-                    {app.subdomain}.selfhost.ishangautam7.com.np ↗
+                    {app.subdomain}.selfhost.ishangautam7.com.np <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft: 4, display: 'inline-block', verticalAlign: 'middle'}}><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
                   </a>
                 </div>
 

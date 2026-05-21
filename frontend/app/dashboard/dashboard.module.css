@@ -491,9 +491,13 @@
   white-space: nowrap;
   overflow-x: auto;
   flex-grow: 1;
+  padding-bottom: 12px;
 }
 
 .commandText::-webkit-scrollbar {
+  height: 4px;
+}
+.commandText::-webkit-scrollbar:hover {
   height: 4px;
 }
 

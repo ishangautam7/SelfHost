@@ -387,8 +387,8 @@ export default function LandingPage() {
                     <Link href="/dashboard" className="btn btn-secondary btn-sm">
                       Open Dashboard
                     </Link>
-                    <span style={{ fontSize: 13, color: 'var(--success)' }}>
-                      ✓ You are logged in! Proceed to Step 3.
+                    <span style={{ fontSize: 13, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> You are logged in! Proceed to Step 3.
                     </span>
                   </div>
                 ) : (

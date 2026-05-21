@@ -4,11 +4,11 @@ Turn your own device into a web server. SelfHost is a complete platform that pro
 
 ## Key Features
 
-- 🚀 **Zero-Config Public URLs**: Instantly get a live HTTPS subdomain routed directly to a local port (e.g., `localhost:3000`).
-- 🦀 **Blazing Fast Rust Agent**: Built a highly efficient WebSocket client in Rust for secure tunneling.
-- 🌐 **Modern Dashboard**: A Next.js frontend to manage multiple apps, monitor active agents, and track live status.
-- 🔗 **Multi-Device Support**: Connect multiple machines using API keys and manage them from a single dashboard.
-- 🐘 **Robust Architecture**: Powered by a Node.js/Express reverse proxy in the cloud and a PostgreSQL database to manage state and routing.
+- **Zero-Config Public URLs**: Instantly get a live HTTPS subdomain routed directly to a local port (e.g., `localhost:3000`).
+- **Blazing Fast Rust Agent**: Built a highly efficient WebSocket client in Rust for secure tunneling.
+- **Modern Dashboard**: A Next.js frontend to manage multiple apps, monitor active agents, and track live status.
+- **Multi-Device Support**: Connect multiple machines using API keys and manage them from a single dashboard.
+- **Robust Architecture**: Powered by a Node.js/Express reverse proxy in the cloud and a PostgreSQL database to manage state and routing.
 
 ## Components
 
@@ -44,14 +44,23 @@ If your domain is `ishangautam7.com.np` and you set `BASE_DOMAIN=selfhost.ishang
 
 ### 3. Run the Agent (Your Local Device)
 
-On the device where your applications are actually running (e.g., your laptop, a Raspberry Pi, or a home server), you need Rust installed (https://rustup.rs/). Then run the agent from the project root:
+On the device where your applications are actually running (e.g., your laptop, a Raspberry Pi, or a home server), you need Rust installed (https://rustup.rs/).
+
+**Install the Agent globally via Cargo:**
+```bash
+cargo install --git https://github.com/ishangautam7/SelfHost --bin agent
+```
+
+Once installed, run the agent using the command provided in your web dashboard:
 
 ```bash
-# Run the agent using the command provided in the web dashboard
-cargo run --release --bin agent -- connect \
+agent connect \
   --server wss://api.ishangautam7.com.np/ws/tunnel \
-  --api-key your-secret-api-key
+  --api-key your-secret-api-key \
+  --agent-id your-device-name
 ```
+
+*(If you built the agent from source without installing globally, use `./target/release/agent connect ...` instead).*
 
 ### 4. Deploy an App
 
