@@ -7,6 +7,14 @@ export interface Claims {
   exp: number;
 }
 
+export function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET must be set to at least 32 characters');
+  }
+  return secret;
+}
+
 // Extend Express Request to include user claims
 declare global {
   namespace Express {
@@ -23,10 +31,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   }
 
   const token = authHeader.substring(7);
-  const secret = process.env.JWT_SECRET || 'supersecretjwtkeythatshouldbechangedinprod';
-
   try {
-    const decoded = jwt.verify(token, secret) as Claims;
+    const decoded = jwt.verify(token, getJwtSecret()) as Claims;
     req.user = decoded;
     next();
   } catch (err) {

@@ -1,5 +1,5 @@
-mod tunnel_client;
 mod app_manager;
+mod tunnel_client;
 
 use clap::{Parser, Subcommand};
 
@@ -44,8 +44,11 @@ fn get_or_create_agent_id(cli_agent_id: Option<String>) -> String {
             agent_id: id.clone(),
         };
         if let Ok(content) = serde_json::to_string_pretty(&config) {
-            if let Ok(_) = fs::write(config_path, content) {
-                log::info!("Saved custom agent ID from CLI arg to agent_config.json: {}", id);
+            if fs::write(config_path, content).is_ok() {
+                log::info!(
+                    "Saved custom agent ID from CLI arg to agent_config.json: {}",
+                    id
+                );
             }
         }
         return id;
@@ -54,7 +57,10 @@ fn get_or_create_agent_id(cli_agent_id: Option<String>) -> String {
     if config_path.exists() {
         if let Ok(content) = fs::read_to_string(config_path) {
             if let Ok(config) = serde_json::from_str::<LocalAgentConfig>(&content) {
-                log::info!("Loaded persistent agent ID from agent_config.json: {}", config.agent_id);
+                log::info!(
+                    "Loaded persistent agent ID from agent_config.json: {}",
+                    config.agent_id
+                );
                 return config.agent_id;
             }
         }
@@ -65,8 +71,11 @@ fn get_or_create_agent_id(cli_agent_id: Option<String>) -> String {
         agent_id: new_id.clone(),
     };
     if let Ok(content) = serde_json::to_string_pretty(&config) {
-        if let Ok(_) = fs::write(config_path, content) {
-            log::info!("Generated and saved new persistent agent ID to agent_config.json: {}", new_id);
+        if fs::write(config_path, content).is_ok() {
+            log::info!(
+                "Generated and saved new persistent agent ID to agent_config.json: {}",
+                new_id
+            );
         }
     }
     new_id
@@ -94,9 +103,7 @@ async fn main() {
 
             loop {
                 log::info!(" Connecting to server...");
-                match tunnel_client::connect_and_run(&server, &api_key, &agent_id, &app_mgr)
-                    .await
-                {
+                match tunnel_client::connect_and_run(&server, &api_key, &agent_id, &app_mgr).await {
                     Ok(()) => {
                         log::info!("Connection closed gracefully");
                     }

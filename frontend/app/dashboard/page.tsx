@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { App, listApps, startApp, stopApp, deleteApp, API_BASE, listActiveAgents, ActiveAgent, getLatestAgent } from '../lib/api';
+import { App, listApps, startApp, stopApp, deleteApp, listActiveAgents, ActiveAgent, getLatestAgent, getTunnelUrl, getPublicAppUrl } from '../lib/api';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 
@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [serverUrl, setServerUrl] = useState('ws://selfhost.ishangautam7.com.np:8080/ws/tunnel');
+  const serverUrl = getTunnelUrl();
   const [copiedCommand, setCopiedCommand] = useState(false);
   const router = useRouter();
 
@@ -61,33 +61,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      loadApps();
-      loadAgents();
-      loadLatestAgent();
-      const interval = setInterval(() => {
+      const refresh = () => {
         loadApps();
         loadAgents();
-      }, 5000);
-      return () => clearInterval(interval);
+        loadLatestAgent();
+      };
+      const initial = setTimeout(refresh, 0);
+      const interval = setInterval(refresh, 5000);
+      return () => {
+        clearTimeout(initial);
+        clearInterval(interval);
+      };
     }
   }, [user, loadApps, loadAgents, loadLatestAgent]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      let wsUrl = 'ws://localhost:3001/ws/tunnel';
-      if (API_BASE) {
-        try {
-          const url = new URL(API_BASE);
-          const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-          wsUrl = `${wsProtocol}//${url.host}/ws/tunnel`;
-        } catch {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          wsUrl = `${protocol}//${window.location.hostname}/ws/tunnel`;
-        }
-      }
-      setServerUrl(wsUrl);
-    }
-  }, []);
 
   const handleStart = async (id: string, name: string) => {
     try {
@@ -298,12 +284,12 @@ export default function DashboardPage() {
                 <div className={styles.appDomain}>
                   <span className={styles.domainLabel}>Public URL</span>
                   <a
-                    href={`http://${app.subdomain}.selfhost.ishangautam7.com.np`}
+                    href={getPublicAppUrl(app.subdomain)}
                     target="_blank"
                     rel="noreferrer"
                     className={styles.domainLink}
                   >
-                    {app.subdomain}.selfhost.ishangautam7.com.np <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft: 4, display: 'inline-block', verticalAlign: 'middle'}}><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                    {new URL(getPublicAppUrl(app.subdomain)).host} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft: 4, display: 'inline-block', verticalAlign: 'middle'}}><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
                   </a>
                 </div>
 

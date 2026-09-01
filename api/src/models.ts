@@ -9,6 +9,7 @@ export interface User {
 export interface App {
   id: string;
   user_id: string;
+  linked_app_id?: string | null;
   name: string;
   subdomain: string;
   local_port: number;

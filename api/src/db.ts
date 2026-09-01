@@ -38,6 +38,7 @@ export async function runMigrations() {
     // Ensure agent_id column exists on existing databases and drop resource columns
     await client.query(`
       ALTER TABLE apps ADD COLUMN IF NOT EXISTS agent_id TEXT;
+      ALTER TABLE apps ADD COLUMN IF NOT EXISTS linked_app_id TEXT REFERENCES apps(id) ON DELETE SET NULL;
       ALTER TABLE apps DROP COLUMN IF EXISTS resource_cpu;
       ALTER TABLE apps DROP COLUMN IF EXISTS resource_memory;
     `);
@@ -51,6 +52,7 @@ export async function runMigrations() {
         last_heartbeat TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       );
+      UPDATE tunnels SET id = user_id || ':' || agent_id;
     `);
 
     console.log('Database migrations completed');
@@ -72,16 +74,16 @@ export async function upsertTunnel(agentId: string, userId: string, isConnected:
      ON CONFLICT(id) DO UPDATE SET
          is_connected = $4,
          last_heartbeat = NOW()`,
-    [agentId, userId, agentId, connected]
+    [`${userId}:${agentId}`, userId, agentId, connected]
   );
 }
 
-export async function setTunnelDisconnected(agentId: string) {
-  await pool.query('UPDATE tunnels SET is_connected = 0 WHERE agent_id = $1', [agentId]);
+export async function setTunnelDisconnected(agentId: string, userId: string) {
+  await pool.query('UPDATE tunnels SET is_connected = 0 WHERE agent_id = $1 AND user_id = $2', [agentId, userId]);
 }
 
-export async function updateAppStatus(appId: string, status: string) {
-  await pool.query('UPDATE apps SET status = $1 WHERE id = $2', [status, appId]);
+export async function updateAppStatus(appId: string, status: string, userId: string) {
+  await pool.query('UPDATE apps SET status = $1 WHERE id = $2 AND user_id = $3', [status, appId, userId]);
 }
 
 export async function getAppBySubdomain(subdomain: string): Promise<any> {
@@ -89,10 +91,15 @@ export async function getAppBySubdomain(subdomain: string): Promise<any> {
   return result.rows[0];
 }
 
-export async function getAppsForAgent(agentId: string): Promise<any[]> {
+export async function getAppForUser(appId: string, userId: string): Promise<any> {
+  const result = await pool.query('SELECT * FROM apps WHERE id = $1 AND user_id = $2', [appId, userId]);
+  return result.rows[0];
+}
+
+export async function getAppsForAgent(agentId: string, userId: string): Promise<any[]> {
   const result = await pool.query(
-    "SELECT * FROM apps WHERE agent_id = $1 AND status IN ('running', 'starting')",
-    [agentId]
+    "SELECT * FROM apps WHERE agent_id = $1 AND user_id = $2 AND status IN ('running', 'starting')",
+    [agentId, userId]
   );
   return result.rows;
 }

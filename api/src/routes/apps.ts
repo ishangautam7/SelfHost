@@ -1,12 +1,21 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { validate as isUuid, v4 as uuidv4 } from 'uuid';
 import { getPool } from '../db';
 import { App } from '../models';
 import { authenticate } from '../middleware/auth';
 import { tunnelManager } from '../tunnel';
+import { validateAppInput } from '../validation';
 
 const router = Router();
 router.use(authenticate);
+
+async function validateLinkedApp(userId: string, appId: string | undefined, linkedAppId: unknown): Promise<string | null> {
+  if (linkedAppId === undefined || linkedAppId === null) return null;
+  if (typeof linkedAppId !== 'string' || !isUuid(linkedAppId)) return 'Invalid linked backend app';
+  if (linkedAppId === appId) return 'An app cannot link to itself';
+  const linked = await getPool().query('SELECT 1 FROM apps WHERE id = $1 AND user_id = $2', [linkedAppId, userId]);
+  return linked.rowCount ? null : 'Linked backend app not found';
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -23,11 +32,16 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const userId = req.user!.sub;
-    const { name, subdomain, local_port, agent_id } = req.body;
-
-    if (!name || !subdomain || !local_port) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const { name, subdomain, local_port, agent_id, linked_app_id } = req.body;
+    const validationError = validateAppInput(name, subdomain, local_port);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
+    if (agent_id !== undefined && (typeof agent_id !== 'string' || !/^[a-zA-Z0-9._-]{1,128}$/.test(agent_id))) {
+      return res.status(400).json({ error: 'Invalid agent ID' });
+    }
+    const linkError = await validateLinkedApp(userId, undefined, linked_app_id);
+    if (linkError) return res.status(400).json({ error: linkError });
 
     const id = uuidv4();
 
@@ -53,12 +67,11 @@ router.post('/', async (req, res) => {
     }
 
     // Sanitize app name subdomain and build flat format: app-username (no dots, so wildcard SSL works)
-    const cleanSub = subdomain.split('.')[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
-    const fullSubdomain = `${cleanSub}-${username}`;
+    const fullSubdomain = `${subdomain}-${username.toLowerCase()}`;
 
     await pool.query(
-      'INSERT INTO apps (id, user_id, agent_id, name, subdomain, local_port) VALUES ($1, $2, $3, $4, $5, $6)',
-      [id, userId, targetAgentId, name, fullSubdomain, local_port]
+      'INSERT INTO apps (id, user_id, agent_id, linked_app_id, name, subdomain, local_port) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [id, userId, targetAgentId, linked_app_id || null, name.trim(), fullSubdomain, local_port]
     );
 
     const result = await pool.query('SELECT * FROM apps WHERE id = $1', [id]);
@@ -103,13 +116,27 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'App not found' });
     }
 
-    const { name, local_port } = req.body;
+    const { name, local_port, linked_app_id } = req.body;
+    const validationError = validateAppInput(name, undefined, local_port, false);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+    const linkError = await validateLinkedApp(userId, appId, linked_app_id);
+    if (linkError) return res.status(400).json({ error: linkError });
 
     if (name !== undefined) {
-      await pool.query('UPDATE apps SET name = $1 WHERE id = $2', [name, appId]);
+      await pool.query('UPDATE apps SET name = $1 WHERE id = $2', [name.trim(), appId]);
     }
     if (local_port !== undefined) {
       await pool.query('UPDATE apps SET local_port = $1 WHERE id = $2', [local_port, appId]);
+    }
+    if (linked_app_id !== undefined) {
+      await pool.query('UPDATE apps SET linked_app_id = $1 WHERE id = $2', [linked_app_id || null, appId]);
+    }
+
+    if (app.status === 'running' && app.agent_id) {
+      const updated = (await pool.query('SELECT * FROM apps WHERE id = $1', [appId])).rows[0];
+      tunnelManager.sendCommand(userId, app.agent_id, updated.id, updated.name, updated.subdomain, updated.local_port, 'restart');
     }
 
     res.json({ message: 'App updated successfully' });
@@ -131,6 +158,9 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'App not found' });
     }
 
+    if (app.status === 'running' && app.agent_id) {
+      tunnelManager.sendCommand(userId, app.agent_id, app.id, app.name, app.subdomain, app.local_port, 'stop');
+    }
     await pool.query('DELETE FROM apps WHERE id = $1', [appId]);
     res.json({ message: 'App deleted successfully' });
   } catch (err) {
@@ -167,9 +197,14 @@ router.post('/:id/start', async (req, res) => {
       return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
     }
 
+    if (!tunnelManager.getSenderByAgentId(userId, targetAgentId)) {
+      return res.status(503).json({ error: 'The selected agent is offline' });
+    }
     await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['starting', targetAgentId, appId]);
-
-    tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start');
+    if (!tunnelManager.sendCommand(userId, targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'start')) {
+      await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['error', appId]);
+      return res.status(503).json({ error: 'The selected agent disconnected' });
+    }
 
     res.json({ message: 'App start requested' });
   } catch (err) {
@@ -206,9 +241,14 @@ router.post('/:id/stop', async (req, res) => {
       return res.status(503).json({ error: 'No active agent found. Please connect your agent device first.' });
     }
 
+    if (!tunnelManager.getSenderByAgentId(userId, targetAgentId)) {
+      return res.status(503).json({ error: 'The selected agent is offline' });
+    }
     await pool.query('UPDATE apps SET status = $1, agent_id = $2 WHERE id = $3', ['stopping', targetAgentId, appId]);
-
-    tunnelManager.sendCommand(targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop');
+    if (!tunnelManager.sendCommand(userId, targetAgentId, app.id, app.name, app.subdomain, app.local_port, 'stop')) {
+      await pool.query('UPDATE apps SET status = $1 WHERE id = $2', ['error', appId]);
+      return res.status(503).json({ error: 'The selected agent disconnected' });
+    }
 
     res.json({ message: 'App stop requested' });
   } catch (err) {

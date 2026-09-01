@@ -29,7 +29,7 @@ impl AppManager {
 
     pub fn register_app(&self, app_id: &str, name: &str, subdomain: &str, local_port: u16) {
         let mut apps = self.apps.write().unwrap();
-        apps.insert(
+        let previous = apps.insert(
             app_id.to_string(),
             AppEntry {
                 name: name.to_string(),
@@ -40,6 +40,9 @@ impl AppManager {
 
         // Use the actual subdomain from the database for routing
         let mut smap = self.subdomain_map.write().unwrap();
+        if let Some(previous) = previous {
+            smap.remove(&previous.subdomain);
+        }
         smap.insert(subdomain.to_string(), local_port);
 
         log::info!(
@@ -71,5 +74,20 @@ impl AppManager {
         apps.iter()
             .map(|(id, entry)| (id.clone(), entry.name.clone(), entry.local_port))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AppManager;
+
+    #[test]
+    fn reregistering_an_app_removes_its_old_route() {
+        let manager = AppManager::new();
+        manager.register_app("app", "Example", "old", 3000);
+        manager.register_app("app", "Example", "new", 4000);
+
+        assert_eq!(manager.get_port_for_subdomain("old"), None);
+        assert_eq!(manager.get_port_for_subdomain("new"), Some(4000));
     }
 }

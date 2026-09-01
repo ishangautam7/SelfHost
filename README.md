@@ -8,6 +8,7 @@ Turn your own device into a web server. SelfHost is a complete platform that pro
 - **Blazing Fast Rust Agent**: Built a highly efficient WebSocket client in Rust for secure tunneling.
 - **Modern Dashboard**: A Next.js frontend to manage multiple apps, monitor active agents, and track live status.
 - **Multi-Device Support**: Connect multiple machines using API keys and manage them from a single dashboard.
+- **Frontend ↔ Backend Links**: Link a frontend app to a backend and call it through the frontend's same-origin `/_backend/*` path.
 - **Robust Architecture**: Powered by a Node.js/Express reverse proxy in the cloud and a PostgreSQL database to manage state and routing.
 
 ## Components
@@ -23,13 +24,17 @@ Turn your own device into a web server. SelfHost is a complete platform that pro
 You can deploy the API and Frontend using Node.js and a PostgreSQL database.
 
 ```bash
+# From the repository root
+cp .env.example .env
+# Set DATABASE_URL and generate JWT_SECRET with: openssl rand -hex 32
+
 # In the /api directory
-npm install
+npm ci
 npm run build
 node dist/index.js
 
 # In the /frontend directory
-npm install
+npm ci
 npm run build
 npm start
 ```
@@ -70,6 +75,13 @@ agent connect \
 4. Enter the local port number your app is running on.
 5. Click "Start" on your dashboard.
 6. You instantly get a public URL like `http://my-app.selfhost.ishangautam7.com.np`!
+
+### Link a Frontend to a Backend
+
+Choose an existing app in the frontend app's **Backend App** field. A request to
+`https://your-frontend.example/_backend/api/users` is forwarded to `/api/users`
+on the linked backend. Both apps must be running; the link also works when they
+are connected through different agents.
 
 ## Technology Stack
 

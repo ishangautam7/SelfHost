@@ -7,11 +7,12 @@ import agentRoutes from './routes/agent';
 import { runMigrations } from './db';
 import { proxyMiddleware } from './proxy';
 import { initTunnelManager } from './tunnel';
+import { getJwtSecret } from './middleware/auth';
 
 dotenv.config({ path: '../.env' });
 
 const app = express();
-const port = parseInt(process.env.PORT || '10000', 10);
+const port = parseInt(process.env.PORT || '8080', 10);
 
 console.log(`PORT env: ${process.env.PORT}, using port: ${port}`);
 
@@ -37,10 +38,11 @@ app.get('/api/health', (req, res) => {
 
 async function startServer() {
   try {
+    getJwtSecret();
     // Run DB migrations before starting
     await runMigrations();
     
-    const host = '0.0.0.0';
+    const host = process.env.HOST || '0.0.0.0';
     const server = app.listen(port as number, host, () => {
       console.log(`Express API & Proxy running on ${host}:${port}`);
     });

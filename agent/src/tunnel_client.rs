@@ -1,6 +1,9 @@
 use futures_util::{SinkExt, StreamExt};
 use shared::tunnel::TunnelMessage;
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use tokio_tungstenite::{
+    connect_async,
+    tungstenite::{client::IntoClientRequest, http::header::AUTHORIZATION, protocol::Message},
+};
 
 use crate::app_manager::AppManager;
 
@@ -10,11 +13,13 @@ pub async fn connect_and_run(
     agent_id: &str,
     app_mgr: &AppManager,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Build URL with auth query params
-    let url = format!("{}?api_key={}&agent_id={}", server_url, api_key, agent_id);
-    let url = url::Url::parse(&url)?;
+    let url = format!("{}?agent_id={}", server_url, agent_id);
+    let mut request = url::Url::parse(&url)?.into_client_request()?;
+    request
+        .headers_mut()
+        .insert(AUTHORIZATION, format!("Bearer {}", api_key).parse()?);
 
-    let (ws_stream, _) = connect_async(url).await?;
+    let (ws_stream, _) = connect_async(request).await?;
     log::info!("WebSocket connected");
 
     let (mut write, mut read) = ws_stream.split();
@@ -39,7 +44,7 @@ pub async fn connect_and_run(
             log::debug!("Sending heartbeat Ping");
             let ping = TunnelMessage::Ping;
             if let Ok(msg) = serde_json::to_string(&ping) {
-                if tx_heartbeat.send(Message::Text(msg.into())).await.is_err() {
+                if tx_heartbeat.send(Message::Text(msg)).await.is_err() {
                     break;
                 }
             }
@@ -106,7 +111,7 @@ pub async fn connect_and_run(
                         };
 
                         let msg = serde_json::to_string(&response).unwrap();
-                        if tx.send(Message::Text(msg.into())).await.is_err() {
+                        if tx.send(Message::Text(msg)).await.is_err() {
                             log::error!("Failed to send response through tunnel");
                             break;
                         }
@@ -161,14 +166,14 @@ pub async fn connect_and_run(
                             message,
                         };
                         let msg = serde_json::to_string(&result).unwrap();
-                        if tx.send(Message::Text(msg.into())).await.is_err() {
+                        if tx.send(Message::Text(msg)).await.is_err() {
                             break;
                         }
                     }
                     Ok(TunnelMessage::Ping) => {
                         let pong = TunnelMessage::Pong;
                         let msg = serde_json::to_string(&pong).unwrap();
-                        let _ = tx.send(Message::Text(msg.into())).await;
+                        let _ = tx.send(Message::Text(msg)).await;
                     }
                     Ok(other) => {
                         log::debug!("Received: {:?}", other);
@@ -209,15 +214,18 @@ async fn forward_to_local(
     let client = reqwest::Client::new();
     let url = format!("http://localhost:{}{}", port, path);
 
-    let mut req_builder = match method {
-        "GET" => client.get(&url),
-        "POST" => client.post(&url),
-        "PUT" => client.put(&url),
-        "DELETE" => client.delete(&url),
-        "PATCH" => client.patch(&url),
-        "HEAD" => client.head(&url),
-        _ => client.get(&url),
+    let method = match reqwest::Method::from_bytes(method.as_bytes()) {
+        Ok(method) => method,
+        Err(_) => {
+            return TunnelMessage::HttpResponse {
+                request_id: String::new(),
+                status_code: 400,
+                headers: std::collections::HashMap::new(),
+                body: Some(b"Invalid HTTP method".to_vec()),
+            };
+        }
     };
+    let mut req_builder = client.request(method, &url);
 
     // Forward headers (except Host which should be localhost)
     for (key, value) in headers {

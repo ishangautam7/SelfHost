@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { createApp, listActiveAgents, ActiveAgent } from '../lib/api';
+import { createApp, listActiveAgents, listApps, ActiveAgent, App, PUBLIC_BASE_DOMAIN } from '../lib/api';
 import Link from 'next/link';
 import styles from './deploy.module.css';
 
@@ -15,6 +15,8 @@ export default function DeployPage() {
   const [localPort, setLocalPort] = useState(3000);
   const [agents, setAgents] = useState<ActiveAgent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState('');
+  const [apps, setApps] = useState<App[]>([]);
+  const [linkedAppId, setLinkedAppId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,6 +30,7 @@ export default function DeployPage() {
           }
         })
         .catch((err) => console.error('Failed to load active agents:', err));
+      listApps().then(setApps).catch((err) => console.error('Failed to load apps:', err));
     }
   }, [user]);
 
@@ -47,7 +50,13 @@ export default function DeployPage() {
     setLoading(true);
 
     try {
-      await createApp({ name, subdomain, local_port: localPort, agent_id: selectedAgent || undefined });
+      await createApp({
+        name,
+        subdomain,
+        local_port: localPort,
+        agent_id: selectedAgent || undefined,
+        linked_app_id: linkedAppId || undefined,
+      });
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create app');
@@ -119,7 +128,7 @@ export default function DeployPage() {
                     placeholder="my-app"
                     required
                   />
-                  <span className={styles.subdomainSuffix}>-{user.username}.selfhost.ishangautam7.com.np</span>
+                  <span className={styles.subdomainSuffix}>-{user.username}.{PUBLIC_BASE_DOMAIN}</span>
                 </div>
               </div>
 
@@ -136,6 +145,24 @@ export default function DeployPage() {
                   required
                 />
                 <span className={styles.hint}>The port your app listens on (e.g. 3000, 8080)</span>
+              </div>
+
+              <div className={styles.field}>
+                <label className="label" htmlFor="linked-app">Backend App <span className={styles.hint}>(optional)</span></label>
+                <select
+                  id="linked-app"
+                  className="input"
+                  value={linkedAppId}
+                  onChange={(e) => setLinkedAppId(e.target.value)}
+                >
+                  <option value="">No linked backend</option>
+                  {apps.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name} · localhost:{candidate.local_port}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.hint}>Requests to /_backend/* will be forwarded to this app.</span>
               </div>
 
               {/* Agent Selection */}
@@ -195,7 +222,7 @@ export default function DeployPage() {
             <h3>Live Preview</h3>
 
             <div className={styles.previewUrl}>
-              <code>{subdomain || 'your-app'}-{user.username}.selfhost.ishangautam7.com.np</code>
+              <code>{subdomain || 'your-app'}-{user.username}.{PUBLIC_BASE_DOMAIN}</code>
             </div>
 
             <div className={styles.previewDetails}>

@@ -37,6 +37,7 @@ export type TunnelMessage =
         command: AgentCommandType;
         app_id: string;
         app_name: string;
+        subdomain: string;
         local_port: number;
       };
     }
@@ -60,12 +61,11 @@ export type TunnelMessage =
 
 export class TunnelManager {
   private senders: Map<string, WebSocket> = new Map(); // agentId -> WebSocket
-  private userAgents: Map<string, Set<string>> = new Map(); // userId -> Set<agentId>
   private pendingRequests: Map<string, (res: TunnelMessage & { type: 'HttpResponse' }) => void> = new Map();
   private wss: WebSocketServer;
 
   constructor(server: Server) {
-    this.wss = new WebSocketServer({ noServer: true });
+    this.wss = new WebSocketServer({ noServer: true, maxPayload: 12 * 1024 * 1024 });
 
     server.on('upgrade', (request: IncomingMessage, socket, head) => {
       const parsedUrl = new URL(request.url || '', `http://${request.headers.host}`);
@@ -78,11 +78,17 @@ export class TunnelManager {
 
     this.wss.on('connection', async (ws: WebSocket, request: IncomingMessage) => {
       const parsedUrl = new URL(request.url || '', `http://${request.headers.host}`);
-      const apiKey = parsedUrl.searchParams.get('api_key');
+      const authHeader = request.headers.authorization;
+      const apiKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
       const agentId = parsedUrl.searchParams.get('agent_id') || `agent_${Date.now()}`;
 
       if (!apiKey) {
-        ws.send(JSON.stringify({ type: 'AuthError', payload: { message: 'Missing api_key query parameter' } }));
+        ws.send(JSON.stringify({ type: 'AuthError', payload: { message: 'Missing Authorization header' } }));
+        ws.close();
+        return;
+      }
+      if (!/^[a-zA-Z0-9._-]{1,128}$/.test(agentId)) {
+        ws.send(JSON.stringify({ type: 'AuthError', payload: { message: 'Invalid agent ID' } }));
         ws.close();
         return;
       }
@@ -97,11 +103,8 @@ export class TunnelManager {
       const userId = user.id;
 
       // Register connection
-      this.senders.set(agentId, ws);
-      if (!this.userAgents.has(userId)) {
-        this.userAgents.set(userId, new Set());
-      }
-      this.userAgents.get(userId)!.add(agentId);
+      const senderKey = `${userId}:${agentId}`;
+      this.senders.set(senderKey, ws);
       upsertTunnel(agentId, userId, true).catch(err => console.error('DB error upserting tunnel:', err));
 
       console.log(`Agent ${agentId} connected for user ${user.username}`);
@@ -116,7 +119,7 @@ export class TunnelManager {
 
       // Sync active apps to the newly connected agent
       try {
-        const apps = await getAppsForAgent(agentId);
+        const apps = await getAppsForAgent(agentId, userId);
         for (const app of apps) {
           ws.send(JSON.stringify({
             type: 'AgentCommand',
@@ -159,7 +162,7 @@ export class TunnelManager {
                 // If agent sends command type, use it directly
                 if (msg.payload.command) {
                   const resultStatus = msg.payload.command === 'stop' ? 'stopped' : 'running';
-                  updateAppStatus(msg.payload.app_id, resultStatus).catch(err => console.error('DB error updating app status:', err));
+                  updateAppStatus(msg.payload.app_id, resultStatus, userId).catch(err => console.error('DB error updating app status:', err));
                 } else {
                   // Fallback: check current DB status to infer intent
                   const pool = getPool();
@@ -167,20 +170,20 @@ export class TunnelManager {
                     .then(appResult => {
                       const currentStatus = appResult.rows[0]?.status;
                       const resultStatus = (currentStatus === 'stopping') ? 'stopped' : 'running';
-                      updateAppStatus(msg.payload.app_id, resultStatus).catch(err => console.error('DB error updating app status:', err));
+                      updateAppStatus(msg.payload.app_id, resultStatus, userId).catch(err => console.error('DB error updating app status:', err));
                     })
                     .catch(dbErr => {
                       console.error('DB error looking up app status for fallback:', dbErr);
-                      updateAppStatus(msg.payload.app_id, 'running').catch(err => console.error('DB error:', err));
+                      updateAppStatus(msg.payload.app_id, 'running', userId).catch(err => console.error('DB error:', err));
                     });
                 }
               } else {
-                updateAppStatus(msg.payload.app_id, 'error').catch(err => console.error('DB error updating app status:', err));
+                updateAppStatus(msg.payload.app_id, 'error', userId).catch(err => console.error('DB error updating app status:', err));
               }
               break;
             case 'StatusReport':
               for (const app of msg.payload.apps) {
-                updateAppStatus(app.app_id, app.status).catch(err => console.error('DB error updating app status from report:', err));
+                updateAppStatus(app.app_id, app.status, userId).catch(err => console.error('DB error updating app status from report:', err));
               }
               break;
           }
@@ -191,17 +194,10 @@ export class TunnelManager {
 
       ws.on('close', () => {
         clearInterval(pingInterval);
-        if (this.senders.get(agentId) === ws) {
-          this.senders.delete(agentId);
+        if (this.senders.get(senderKey) === ws) {
+          this.senders.delete(senderKey);
+          setTunnelDisconnected(agentId, userId).catch(err => console.error('DB error setting tunnel disconnected:', err));
         }
-        const agents = this.userAgents.get(userId);
-        if (agents) {
-          agents.delete(agentId);
-          if (agents.size === 0) {
-            this.userAgents.delete(userId);
-          }
-        }
-        setTunnelDisconnected(agentId).catch(err => console.error('DB error setting tunnel disconnected:', err));
         console.log(`Agent ${agentId} disconnected`);
       });
 
@@ -211,21 +207,12 @@ export class TunnelManager {
     });
   }
 
-  public getSender(userId: string): WebSocket | undefined {
-    const agents = this.userAgents.get(userId);
-    if (agents && agents.size > 0) {
-      const firstAgentId = Array.from(agents)[0];
-      return this.senders.get(firstAgentId);
-    }
-    return undefined;
+  public getSenderByAgentId(userId: string, agentId: string): WebSocket | undefined {
+    return this.senders.get(`${userId}:${agentId}`);
   }
 
-  public getSenderByAgentId(agentId: string): WebSocket | undefined {
-    return this.senders.get(agentId);
-  }
-
-  public async sendHttpRequest(agentIdOrUserId: string, request: TunnelMessage & { type: 'HttpRequest' }): Promise<(TunnelMessage & { type: 'HttpResponse' }) | null> {
-    const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
+  public async sendHttpRequest(userId: string, agentId: string, request: TunnelMessage & { type: 'HttpRequest' }): Promise<(TunnelMessage & { type: 'HttpResponse' }) | null> {
+    const ws = this.getSenderByAgentId(userId, agentId);
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       return null;
     }
@@ -251,14 +238,16 @@ export class TunnelManager {
     });
   }
 
-  public sendCommand(agentIdOrUserId: string, app_id: string, app_name: string, subdomain: string, local_port: number, command: AgentCommandType) {
-    const ws = this.getSenderByAgentId(agentIdOrUserId) || this.getSender(agentIdOrUserId);
+  public sendCommand(userId: string, agentId: string, app_id: string, app_name: string, subdomain: string, local_port: number, command: AgentCommandType): boolean {
+    const ws = this.getSenderByAgentId(userId, agentId);
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
         type: 'AgentCommand',
         payload: { command, app_id, app_name, subdomain, local_port }
       }));
+      return true;
     }
+    return false;
   }
 }
 

@@ -19,6 +19,9 @@
 /frontend/.env.test.local
 /frontend/.env.production.local
 /frontend/.eslintcache
+/api/dist
+/api/node_modules
+/agent_config.json
 
 # Database
 /data/

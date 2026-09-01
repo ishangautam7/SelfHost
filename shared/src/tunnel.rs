@@ -7,20 +7,13 @@ use std::collections::HashMap;
 #[serde(tag = "type", content = "payload")]
 pub enum TunnelMessage {
     /// Agent authenticates with the server
-    Auth {
-        api_key: String,
-        agent_id: String,
-    },
+    Auth { api_key: String, agent_id: String },
 
     /// Server confirms authentication
-    AuthOk {
-        message: String,
-    },
+    AuthOk { message: String },
 
     /// Authentication failed
-    AuthError {
-        message: String,
-    },
+    AuthError { message: String },
 
     /// Server forwards an incoming HTTP request to the agent
     HttpRequest {
@@ -64,9 +57,7 @@ pub enum TunnelMessage {
     },
 
     /// Agent reports current status of all apps
-    StatusReport {
-        apps: Vec<AppStatusEntry>,
-    },
+    StatusReport { apps: Vec<AppStatusEntry> },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

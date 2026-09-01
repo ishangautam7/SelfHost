@@ -1,4 +1,18 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.ishangautam7.com.np';
+export const PUBLIC_BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'selfhost.ishangautam7.com.np';
+
+export function getPublicAppUrl(subdomain: string): string {
+  return `https://${subdomain}.${PUBLIC_BASE_DOMAIN}`;
+}
+
+export function getTunnelUrl(): string {
+  try {
+    const url = new URL(API_BASE);
+    return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/ws/tunnel`;
+  } catch {
+    return 'ws://localhost:3001/ws/tunnel';
+  }
+}
 
 export interface UserPublic {
   id: string;
@@ -11,6 +25,7 @@ export interface App {
   id: string;
   user_id: string;
   agent_id?: string;
+  linked_app_id?: string | null;
   name: string;
   subdomain: string;
   local_port: number;
@@ -23,6 +38,7 @@ export interface CreateAppRequest {
   subdomain: string;
   local_port: number;
   agent_id?: string;
+  linked_app_id?: string | null;
 }
 
 // ─── Token helpers ────────────────────────────────────────────────────

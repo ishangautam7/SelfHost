@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
     }
   }, []);
 

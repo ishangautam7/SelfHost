@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { App, getApp, startApp, stopApp, deleteApp, updateApp } from '../../lib/api';
+import { App, getApp, listApps, startApp, stopApp, deleteApp, updateApp, getPublicAppUrl, getTunnelUrl } from '../../lib/api';
 import Link from 'next/link';
 import styles from './detail.module.css';
 
@@ -17,28 +17,38 @@ export default function AppDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editPort, setEditPort] = useState(0);
+  const [apps, setApps] = useState<App[]>([]);
+  const [linkedAppId, setLinkedAppId] = useState('');
 
-  useEffect(() => {
-    if (user && appId) {
-      loadApp();
-      const interval = setInterval(loadApp, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [user, appId]);
-
-  const loadApp = async () => {
+  const loadApp = useCallback(async () => {
     try {
       const data = await getApp(appId);
       setApp(data);
       if (!editing) {
         setEditPort(data.local_port);
+        setLinkedAppId(data.linked_app_id || '');
       }
     } catch {
       router.push('/dashboard');
     } finally {
       setLoading(false);
     }
-  };
+  }, [appId, editing, router]);
+
+  useEffect(() => {
+    if (user && appId) {
+      const initial = setTimeout(loadApp, 0);
+      const interval = setInterval(loadApp, 3000);
+      return () => {
+        clearTimeout(initial);
+        clearInterval(interval);
+      };
+    }
+  }, [user, appId, loadApp]);
+
+  useEffect(() => {
+    if (user) listApps().then(setApps).catch(() => setApps([]));
+  }, [user]);
 
   const handleStart = async () => {
     try { await startApp(appId); loadApp(); } catch (e) { alert(e instanceof Error ? e.message : 'Failed'); }
@@ -57,6 +67,7 @@ export default function AppDetailPage() {
     try {
       await updateApp(appId, {
         local_port: editPort,
+        linked_app_id: linkedAppId || null,
       });
       setEditing(false);
       loadApp();
@@ -66,7 +77,9 @@ export default function AppDetailPage() {
   if (!user || loading) return null;
   if (!app) return <div>App not found</div>;
 
-  const fullDomain = `${app.subdomain}.selfhost.ishangautam7.com.np`;
+  const publicUrl = getPublicAppUrl(app.subdomain);
+  const fullDomain = new URL(publicUrl).host;
+  const tunnelUrl = getTunnelUrl();
 
   return (
     <div className={styles.page}>
@@ -100,10 +113,10 @@ export default function AppDetailPage() {
         <div className={`card ${styles.domainCard}`}>
           <h3>Public URL</h3>
           <div className={styles.domainRow}>
-            <a href={`http://${fullDomain}`} target="_blank" rel="noreferrer" className={styles.domainUrl}>
+            <a href={publicUrl} target="_blank" rel="noreferrer" className={styles.domainUrl}>
               {fullDomain}
             </a>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigator.clipboard.writeText(`http://${fullDomain}`)}>
+            <button className="btn btn-secondary btn-sm" onClick={() => navigator.clipboard.writeText(publicUrl)}>
               Copy URL
             </button>
           </div>
@@ -136,8 +149,33 @@ export default function AppDetailPage() {
                 <span className={styles.configValue}>{app.local_port}</span>
               )}
             </div>
+            <div className={styles.configItem}>
+              <span className={styles.configLabel}>Linked Backend</span>
+              {editing ? (
+                <select className="input" value={linkedAppId} onChange={(e) => setLinkedAppId(e.target.value)}>
+                  <option value="">No linked backend</option>
+                  {apps.filter((candidate) => candidate.id !== app.id).map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>{candidate.name} · localhost:{candidate.local_port}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className={styles.configValue}>
+                  {apps.find((candidate) => candidate.id === app.linked_app_id)?.name || 'None'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {app.linked_app_id && (
+          <div className={`card ${styles.guideCard}`}>
+            <h3>Frontend → Backend Link</h3>
+            <p>
+              Use <code>{publicUrl}/_backend/...</code> in this frontend. SelfHost strips
+              <code> /_backend</code> and forwards the request to the linked app on the same origin.
+            </p>
+          </div>
+        )}
 
         {/* Agent Setup Guide */}
         <div className={`card ${styles.guideCard}`}>
@@ -145,7 +183,7 @@ export default function AppDetailPage() {
           <p>Run this on the device where your app is running:</p>
           <pre className={styles.codeBlock}>
             {`agent connect \\
-  --server wss://api.ishangautam7.com.np/ws/tunnel \\
+  --server ${tunnelUrl} \\
   --api-key ${user?.api_key || 'YOUR_API_KEY'}${
     app?.agent_id ? ` \\\n  --agent-id ${app.agent_id}` : ''
   }`}
@@ -154,7 +192,7 @@ export default function AppDetailPage() {
             className="btn btn-secondary btn-sm"
             style={{ marginTop: '0.75rem' }}
             onClick={() => navigator.clipboard.writeText(
-              `agent connect --server wss://api.ishangautam7.com.np/ws/tunnel --api-key ${user.api_key}${app.agent_id ? ` --agent-id ${app.agent_id}` : ''}`
+              `agent connect --server ${tunnelUrl} --api-key ${user.api_key}${app.agent_id ? ` --agent-id ${app.agent_id}` : ''}`
             )}
           >
             Copy Command

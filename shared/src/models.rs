@@ -49,26 +49,6 @@ pub enum AppStatus {
     Error,
 }
 
-impl AppStatus {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            AppStatus::Running => "running",
-            AppStatus::Stopped => "stopped",
-            AppStatus::Deploying => "deploying",
-            AppStatus::Error => "error",
-        }
-    }
-
-    pub fn from_str(s: &str) -> Self {
-        match s {
-            "running" => AppStatus::Running,
-            "deploying" => AppStatus::Deploying,
-            "error" => AppStatus::Error,
-            _ => AppStatus::Stopped,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct App {
     pub id: String,

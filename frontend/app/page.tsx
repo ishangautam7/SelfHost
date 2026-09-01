@@ -4,7 +4,7 @@ import { useAuth } from './context/AuthContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
-import { API_BASE } from './lib/api';
+import { getTunnelUrl } from './lib/api';
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -13,14 +13,14 @@ export default function LandingPage() {
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [showBrowser, setShowBrowser] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState('');
-  const [promptPath, setPromptPath] = useState('~');
 
   // Installer Tab Selection
   const [installMethod, setInstallMethod] = useState<'cargo' | 'source'>('cargo');
 
   // Command Builder State
   const [builderPort, setBuilderPort] = useState('3000');
-  const [builderKey, setBuilderKey] = useState(user?.api_key || 'sh_usr_a1b2c3d4e5f6');
+  const [builderKey, setBuilderKey] = useState('');
+  const effectiveBuilderKey = builderKey || user?.api_key || 'sh_usr_a1b2c3d4e5f6';
 
   // Clipboard copied indicators
   const [copiedInstall, setCopiedInstall] = useState(false);
@@ -29,32 +29,7 @@ export default function LandingPage() {
   // FAQ Active Index
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  // Dynamic Server URL Calculation
-  const [serverUrl, setServerUrl] = useState('ws://localhost:3001/ws/tunnel');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      let wsUrl = 'ws://localhost:3001/ws/tunnel';
-      if (API_BASE) {
-        try {
-          const url = new URL(API_BASE);
-          const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-          wsUrl = `${wsProtocol}//${url.host}/ws/tunnel`;
-        } catch {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          wsUrl = `${protocol}//${window.location.hostname}/ws/tunnel`;
-        }
-      }
-      setServerUrl(wsUrl);
-    }
-  }, []);
-
-  // Update API Key if user loads later
-  useEffect(() => {
-    if (user?.api_key) {
-      setBuilderKey(user.api_key);
-    }
-  }, [user]);
+  const serverUrl = getTunnelUrl();
 
   // Terminal Typing Animation Loop
   useEffect(() => {
@@ -66,7 +41,6 @@ export default function LandingPage() {
         // Clear terminal & reset browser
         setTerminalLines([]);
         setShowBrowser(false);
-        setPromptPath('~');
         await sleep(1200);
         if (!active) break;
 
@@ -95,7 +69,6 @@ export default function LandingPage() {
         if (!active) break;
 
         // Command 2: Type connect command
-        setPromptPath('~');
         const cmd2 = `agent connect --server ${serverUrl} --api-key ${user?.api_key || 'sh_usr_a1b2c3d4'} --agent-id my-device`;
         // Limit display string in typing loop to prevent infinite wrapping
         const displayCmd = `agent connect --server .../ws/tunnel --api-key sh_usr_7x9a8b --agent-id my-device`;
@@ -149,7 +122,7 @@ export default function LandingPage() {
 
   const handleCopyConnect = () => {
     const binary = installMethod === 'cargo' ? 'agent' : './target/release/agent';
-    const text = `${binary} connect --server ${serverUrl} --api-key ${builderKey} --agent-id my-device`;
+    const text = `${binary} connect --server ${serverUrl} --api-key ${effectiveBuilderKey} --agent-id my-device`;
     navigator.clipboard.writeText(text);
     setCopiedConnect(true);
     setTimeout(() => setCopiedConnect(false), 2000);
@@ -433,7 +406,7 @@ export default function LandingPage() {
                       type="text"
                       className={styles.formInput}
                       placeholder="Paste sh_usr_..."
-                      value={builderKey}
+                      value={effectiveBuilderKey}
                       onChange={(e) => setBuilderKey(e.target.value)}
                     />
                   </div>
@@ -445,7 +418,7 @@ export default function LandingPage() {
                     <span>
                       {installMethod === 'cargo' ? 'agent' : './target/release/agent'} connect \<br />
                       &nbsp;&nbsp;--server {serverUrl} \<br />
-                      &nbsp;&nbsp;--api-key {builderKey || '<your-api-key>'} \<br />
+                      &nbsp;&nbsp;--api-key {effectiveBuilderKey} \<br />
                       &nbsp;&nbsp;--agent-id my-device
                     </span>
                   </div>

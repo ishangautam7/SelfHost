@@ -4,19 +4,22 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getPool } from '../db';
 import { User } from '../models';
-import { authenticate } from '../middleware/auth';
+import { authenticate, getJwtSecret } from '../middleware/auth';
+import { validateCredentials } from '../validation';
 
 const router = Router();
 
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    const validationError = validateCredentials(username, password);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
+    const normalizedUsername = username.toLowerCase();
 
     const pool = getPool();
-    const existing = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const existing = await pool.query('SELECT * FROM users WHERE LOWER(username) = $1', [normalizedUsername]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Username already exists' });
     }
@@ -27,16 +30,18 @@ router.post('/register', async (req, res) => {
 
     await pool.query(
       'INSERT INTO users (id, username, password_hash, api_key) VALUES ($1, $2, $3, $4)',
-      [id, username, passwordHash, apiKey]
+      [id, normalizedUsername, passwordHash, apiKey]
     );
 
-    const secret = process.env.JWT_SECRET || 'supersecretjwtkeythatshouldbechangedinprod';
     const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
-    const token = jwt.sign({ sub: id, username, exp }, secret);
+    const token = jwt.sign({ sub: id, username: normalizedUsername, exp }, getJwtSecret());
 
     res.json({ token });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Username already exists' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -44,12 +49,12 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
+    if (typeof username !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
     const pool = getPool();
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [username]);
     const user = result.rows[0] as User | undefined;
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -60,9 +65,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const secret = process.env.JWT_SECRET || 'supersecretjwtkeythatshouldbechangedinprod';
     const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
-    const token = jwt.sign({ sub: user.id, username, exp }, secret);
+    const token = jwt.sign({ sub: user.id, username: user.username, exp }, getJwtSecret());
 
     res.json({ token });
   } catch (err) {
