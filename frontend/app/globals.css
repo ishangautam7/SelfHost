@@ -264,6 +264,15 @@ input, textarea, select { font-family: inherit; outline: none; }
 .input::placeholder { color: var(--text-muted); }
 .input:hover:not(:focus) { border-color: var(--border-hover); }
 
+select.input {
+  color-scheme: dark;
+}
+
+select.input option {
+  background: #111111;
+  color: var(--text-primary);
+}
+
 .label {
   display: block;
   font-size: 12px;
