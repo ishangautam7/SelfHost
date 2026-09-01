@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { createApp, listActiveAgents, listApps, ActiveAgent, App, PUBLIC_BASE_DOMAIN } from '../lib/api';
 import Link from 'next/link';
 import styles from './deploy.module.css';
+import BrandMark from '../components/BrandMark';
 
 export default function DeployPage() {
   const { user } = useAuth();
@@ -76,11 +77,7 @@ export default function DeployPage() {
           </Link>
           <Link href="/dashboard" className={styles.navLogo}>
             <div className={styles.logoMark}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
-              </svg>
+              <BrandMark />
             </div>
             <span className={styles.logoText}>SelfHost</span>
           </Link>

@@ -16,6 +16,20 @@
   height: 64px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.logoText {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .backLink {

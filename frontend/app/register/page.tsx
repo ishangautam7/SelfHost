@@ -6,6 +6,7 @@ import { register } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
 import styles from '../login/auth.module.css';
+import BrandMark from '../components/BrandMark';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -51,6 +52,10 @@ export default function RegisterPage() {
 
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
+          <Link href="/" className={styles.logo}>
+            <BrandMark size={42} priority />
+            <span className={styles.logoText}>SelfHost</span>
+          </Link>
           <h1>Create Account</h1>
           <p>Start hosting apps from your own device</p>
         </div>

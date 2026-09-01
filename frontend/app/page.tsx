@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import { getTunnelUrl } from './lib/api';
+import BrandMark from './components/BrandMark';
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -161,11 +162,7 @@ export default function LandingPage() {
         <div className={styles.navInner}>
           <Link href="/" className={styles.navLogo}>
             <div className={styles.logoMark}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
-              </svg>
+              <BrandMark size={36} priority />
             </div>
             SelfHost
           </Link>

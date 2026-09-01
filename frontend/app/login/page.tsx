@@ -6,6 +6,7 @@ import { login } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
 import styles from './auth.module.css';
+import BrandMark from '../components/BrandMark';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -41,6 +42,10 @@ export default function LoginPage() {
 
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
+          <Link href="/" className={styles.logo}>
+            <BrandMark size={42} priority />
+            <span className={styles.logoText}>SelfHost</span>
+          </Link>
           <h1>Welcome back</h1>
           <p>Sign in to manage your hosted applications</p>
         </div>

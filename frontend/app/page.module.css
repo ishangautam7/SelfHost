@@ -45,12 +45,14 @@
 }
 
 .logoMark {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
   filter: drop-shadow(0 0 8px var(--accent-glow));
   animation: logo-pulse 4s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .navRight {

@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { App, getApp, listApps, startApp, stopApp, deleteApp, updateApp, getPublicAppUrl, getTunnelUrl } from '../../lib/api';
 import Link from 'next/link';
 import styles from './detail.module.css';
+import BrandMark from '../../components/BrandMark';
 
 export default function AppDetailPage() {
   const { user } = useAuth();
@@ -86,6 +87,10 @@ export default function AppDetailPage() {
       <nav className={styles.navbar}>
         <div className={styles.navInner}>
           <Link href="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+          <Link href="/dashboard" className={styles.navLogo}>
+            <BrandMark size={32} />
+            <span className={styles.logoText}>SelfHost</span>
+          </Link>
         </div>
       </nav>
 

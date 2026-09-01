@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 export const metadata: Metadata = {
   title: "SelfHost — Host Apps on Your Own Device",
+  applicationName: "SelfHost",
   description: "Self-hosting platform that turns your device into a web server. Deploy apps, get a subdomain, go live instantly.",
 };
 
